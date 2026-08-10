@@ -681,7 +681,7 @@ const handleSubmit2 = async () => {
 .object-slider {
     position: relative;
     width: 100%;
-    height: clamp(420px, 58vw, 720px);
+    height: clamp(300px, 40vw, 500px);
     background: #E6F0EC;
 }
 
@@ -1133,7 +1133,7 @@ const handleSubmit2 = async () => {
     }
 
     .object-slider {
-        height: 360px;
+        height: 260px;
     }
 
     .object-summary,

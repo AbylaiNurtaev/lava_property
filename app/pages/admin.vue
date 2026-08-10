@@ -411,8 +411,6 @@ onMounted(loadAdminData)
             <div class="admin-content">
                 <div v-if="loading" class="admin-loading" :class="{ initial: initialLoading }">
                     <div class="admin-spinner"></div>
-                    <strong>{{ loadingTitle }}</strong>
-                    <span>Данные подтягиваются из MongoDB, это может занять несколько секунд.</span>
                 </div>
 
                 <section v-if="activeTab === 'properties'" class="admin-grid">
@@ -515,24 +513,24 @@ onMounted(loadAdminData)
                                 <button type="button" title="Подзаголовок" @click="setEditorBlock('h3')">H3</button>
                                 <button type="button" title="Обычный текст" @click="setEditorBlock('p')">P</button>
                                 <button type="button" title="Жирный" @click="runEditorCommand('bold')">
-                                    <i class="pi pi-bold"></i>
+                                    B
                                 </button>
                                 <button type="button" title="Курсив" @click="runEditorCommand('italic')">
-                                    <i class="pi pi-italic"></i>
+                                    I
                                 </button>
                                 <button type="button" title="Маркированный список"
                                     @click="runEditorCommand('insertUnorderedList')">
-                                    <i class="pi pi-list"></i>
+                                    List
                                 </button>
                                 <button type="button" title="Нумерованный список"
                                     @click="runEditorCommand('insertOrderedList')">
                                     1.
                                 </button>
                                 <button type="button" title="Ссылка" @click="createEditorLink">
-                                    <i class="pi pi-link"></i>
+                                    Link
                                 </button>
                                 <button type="button" title="Очистить формат" @click="runEditorCommand('removeFormat')">
-                                    <i class="pi pi-eraser"></i>
+                                    Clear
                                 </button>
                             </div>
                             <div :key="editorRenderKey" ref="articleEditor" class="rich-editor" contenteditable="true"
@@ -745,42 +743,24 @@ onMounted(loadAdminData)
 }
 
 .admin-loading {
-    position: sticky;
-    top: 16px;
+    position: fixed;
+    inset: 0;
     z-index: 30;
-    display: grid;
-    grid-template-columns: 34px minmax(0, auto);
+    display: flex;
     align-items: center;
-    gap: 4px 12px;
-    margin-bottom: 12px;
-    border: 1px solid #E3E1DA;
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.94);
-    padding: 14px 16px;
-    box-shadow: 0 16px 40px rgba(43, 41, 37, 0.1);
+    justify-content: center;
+    background: rgba(250, 249, 246, 0.66);
     backdrop-filter: blur(12px);
 }
 
 .admin-loading.initial {
-    min-height: 86px;
-}
-
-.admin-loading strong {
-    color: #2B2925;
-    font-family: 'Montserrat-Bold', sans-serif;
-}
-
-.admin-loading span {
-    grid-column: 2;
-    color: #6B6864;
-    font-size: 13px;
+    min-height: 0;
 }
 
 .admin-spinner {
-    grid-row: span 2;
-    width: 30px;
-    height: 30px;
-    border: 3px solid #E6F0EC;
+    width: 54px;
+    height: 54px;
+    border: 4px solid #E6F0EC;
     border-top-color: #0F5C43;
     border-radius: 50%;
     animation: admin-spin 0.8s linear infinite;
@@ -936,14 +916,22 @@ onMounted(loadAdminData)
 
 .rich-toolbar button {
     display: grid;
-    min-width: 36px;
+    min-width: 64px;
     height: 36px;
     place-items: center;
     border-radius: 8px;
     padding: 0 10px;
-    background: #fff;
+    border: 1px solid #E3E1DA;
+    background: #FFFFFF;
     color: #2B2925;
     font-family: 'Montserrat-Bold', sans-serif;
+    font-size: 13px;
+}
+
+.rich-toolbar button:hover {
+    border-color: #0F5C43;
+    background: #E6F0EC;
+    color: #0F5C43;
 }
 
 .rich-editor {

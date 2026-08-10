@@ -320,7 +320,26 @@ const handleSubmit2 = async () => {
                 </div>
             </div>
 
-            <aside class="object-summary">
+            <aside class="object-specs-panel">
+                <span class="section-kicker">Характеристики</span>
+                <h2>Параметры объекта</h2>
+                <dl class="object-facts">
+                    <div v-for="item in summarySpecs" :key="item.label">
+                        <dt>{{ item.label }}</dt>
+                        <dd>{{ item.value }}</dd>
+                    </div>
+                </dl>
+                <ul class="spec-list compact">
+                    <li v-for="(value, key) in currentProperty.specs" :key="key">
+                        <span>{{ translateSpecKey(key as string) }}</span>
+                        <strong>{{ value }}</strong>
+                    </li>
+                </ul>
+            </aside>
+        </section>
+
+        <section v-if="currentProperty" class="object-info container">
+            <div class="object-info-main">
                 <div class="object-summary-top">
                     <span class="object-eyebrow">Lava Property</span>
                     <h1>{{ currentProperty.name }}</h1>
@@ -333,13 +352,6 @@ const handleSubmit2 = async () => {
                     <small v-if="currentProperty.priceTHB">{{ currentProperty.priceTHB }}</small>
                 </div>
 
-                <dl class="object-facts">
-                    <div v-for="item in summarySpecs" :key="item.label">
-                        <dt>{{ item.label }}</dt>
-                        <dd>{{ item.value }}</dd>
-                    </div>
-                </dl>
-
                 <div v-if="amenities.length" class="object-amenities">
                     <span>Удобства</span>
                     <ul>
@@ -347,58 +359,45 @@ const handleSubmit2 = async () => {
                     </ul>
                 </div>
 
-                <div class="object-contact-card">
-                    <div class="manager-row">
-                        <div class="manager-avatars">
-                            <img src="/img/people/anna.png" alt="Менеджер" />
-                            <img src="/img/people/sergio.png" alt="Менеджер" />
-                            <img src="/img/people/vika.png" alt="Менеджер" />
-                            <img src="/img/people/ekat.png" alt="Менеджер" />
-                        </div>
-                        <p>Подберём планировку, рассчитаем доходность и ответим на вопросы.</p>
-                    </div>
+                <article class="project-description">
+                    <span class="section-kicker">Описание</span>
+                    <h2>О проекте</h2>
+                    <div v-html="currentProperty.description || ''"></div>
+                </article>
+            </div>
 
-                    <form @submit.prevent="handleSubmit2" class="object-form">
-                        <div v-if="message" class="form-error">{{ message }}</div>
-                        <div class="phone-field">
-                            <span class="flag-badge" :title="countryName">
-                                {{ flag }}
-                            </span>
-                            <input v-model="phone" v-maska="'+#################'" placeholder="+" type="tel"
-                                @focus="ensurePlus" />
-                        </div>
-                        <button type="submit">Заказать звонок</button>
-                        <span v-if="successfully" class="form-success">
-                            Мы уже получили ваше сообщение.
+            <aside class="object-contact-card">
+                <div class="manager-row">
+                    <div class="manager-avatars">
+                        <img src="/img/people/anna.png" alt="Менеджер" />
+                        <img src="/img/people/sergio.png" alt="Менеджер" />
+                        <img src="/img/people/vika.png" alt="Менеджер" />
+                        <img src="/img/people/ekat.png" alt="Менеджер" />
+                    </div>
+                    <p>Подберём планировку, рассчитаем доходность и ответим на вопросы.</p>
+                </div>
+
+                <form @submit.prevent="handleSubmit2" class="object-form">
+                    <div v-if="message" class="form-error">{{ message }}</div>
+                    <div class="phone-field">
+                        <span class="flag-badge" :title="countryName">
+                            {{ flag }}
                         </span>
-                    </form>
-
-                    <div class="messenger-row">
-                        <span>Можно написать сразу:</span>
-                        <IconsTheTelegram />
-                        <IconsTheWhatsApp />
+                        <input v-model="phone" v-maska="'+#################'" placeholder="+" type="tel"
+                            @focus="ensurePlus" />
                     </div>
+                    <button type="submit">Заказать звонок</button>
+                    <span v-if="successfully" class="form-success">
+                        Мы уже получили ваше сообщение.
+                    </span>
+                </form>
+
+                <div class="messenger-row">
+                    <span>Можно написать сразу:</span>
+                    <IconsTheTelegram />
+                    <IconsTheWhatsApp />
                 </div>
             </aside>
-        </section>
-
-        <section v-if="currentProperty" class="object-details container">
-            <article class="detail-card description-card">
-                <span class="section-kicker">Описание</span>
-                <h2>О проекте</h2>
-                <div v-html="currentProperty.description || ''"></div>
-            </article>
-
-            <article class="detail-card">
-                <span class="section-kicker">Характеристики</span>
-                <h2>Параметры объекта</h2>
-                <ul class="spec-list">
-                    <li v-for="(value, key) in currentProperty.specs" :key="key">
-                        <span>{{ translateSpecKey(key as string) }}</span>
-                        <strong>{{ value }}</strong>
-                    </li>
-                </ul>
-            </article>
         </section>
 
         <section v-else class="object-empty container">
@@ -406,41 +405,41 @@ const handleSubmit2 = async () => {
             <NuxtLink to="/best">Вернуться в каталог</NuxtLink>
         </section>
 
-    <!-- SWIPER: Архитектура и территория -->
-    <section v-if="galleryExterior.length" class="container my-16">
-        <h2 class="text-2xl lg:text-4xl mb-4">Архитектура и территория</h2>
-        <p class="my-8" v-html="currentProperty?.descriptionExterior"></p>
-        <ClientOnly>
-            <Swiper :modules="swiperModules" :loop="galleryExterior.length > 2" :keyboard="{ enabled: true }"
-                :breakpoints="{
-                    0: { slidesPerView: 1, spaceBetween: 12 },
-                    1024: { slidesPerView: 3, spaceBetween: 22 }
-                }" :navigation="{ nextEl: '.ext-next', prevEl: '.ext-prev' }" :prevent-clicks="false"
-                :prevent-clicks-propagation="false" class="w-full h-[400px] rounded-[20px] overflow-hidden">
-                <SwiperSlide v-for="(src, i) in galleryExterior" :key="i">
-                    <!-- обёртка, на ней click.stop -->
-                    <div class="w-full h-full" @click.stop="openLightbox(src, galleryExterior, i)">
-                        <img :src="src" :alt="`Интерьер — фото ${i + 1}`"
-                            class="w-full h-full object-cover cursor-zoom-in" loading="lazy" decoding="async"
-                            referrerpolicy="no-referrer" />
-                    </div>
-                </SwiperSlide>
+        <!-- SWIPER: Архитектура и территория -->
+        <section v-if="galleryExterior.length" class="container my-16">
+            <h2 class="text-2xl lg:text-4xl mb-4">Архитектура и территория</h2>
+            <p class="my-8" v-html="currentProperty?.descriptionExterior"></p>
+            <ClientOnly>
+                <Swiper :modules="swiperModules" :loop="galleryExterior.length > 2" :keyboard="{ enabled: true }"
+                    :breakpoints="{
+                        0: { slidesPerView: 1, spaceBetween: 12 },
+                        1024: { slidesPerView: 3, spaceBetween: 22 }
+                    }" :navigation="{ nextEl: '.ext-next', prevEl: '.ext-prev' }" :prevent-clicks="false"
+                    :prevent-clicks-propagation="false" class="w-full h-[400px] rounded-[20px] overflow-hidden">
+                    <SwiperSlide v-for="(src, i) in galleryExterior" :key="i">
+                        <!-- обёртка, на ней click.stop -->
+                        <div class="w-full h-full" @click.stop="openLightbox(src, galleryExterior, i)">
+                            <img :src="src" :alt="`Интерьер — фото ${i + 1}`"
+                                class="w-full h-full object-cover cursor-zoom-in" loading="lazy" decoding="async"
+                                referrerpolicy="no-referrer" />
+                        </div>
+                    </SwiperSlide>
 
-                <template #container-end>
-                    <button class="nav-btn nav-prev ext-prev" aria-label="Назад">
-                        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M15 18l-6-6 6-6" />
-                        </svg>
-                    </button>
-                    <button class="nav-btn nav-next ext-next" aria-label="Вперёд">
-                        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M9 6l6 6-6 6" />
-                        </svg>
-                    </button>
-                </template>
-            </Swiper>
-        </ClientOnly>
-    </section>
+                    <template #container-end>
+                        <button class="nav-btn nav-prev ext-prev" aria-label="Назад">
+                            <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M15 18l-6-6 6-6" />
+                            </svg>
+                        </button>
+                        <button class="nav-btn nav-next ext-next" aria-label="Вперёд">
+                            <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 6l6 6-6 6" />
+                            </svg>
+                        </button>
+                    </template>
+                </Swiper>
+            </ClientOnly>
+        </section>
 
     <!-- Генплан -->
     <div v-if="genplanList[0]" class="container mx-auto w-full flex flex-col lg:flex-row gap-10 mb-20 items-stretch">
@@ -665,7 +664,8 @@ const handleSubmit2 = async () => {
 }
 
 .object-gallery-panel,
-.object-summary,
+.object-specs-panel,
+.object-info,
 .detail-card,
 .object-empty {
     border: 1px solid #E3E1DA;
@@ -724,12 +724,21 @@ const handleSubmit2 = async () => {
     transform: scale(1.04);
 }
 
-.object-summary {
+.object-specs-panel {
     position: sticky;
     top: 104px;
     display: grid;
-    gap: 16px;
+    align-content: start;
+    gap: 18px;
     padding: 22px;
+}
+
+.object-specs-panel h2,
+.project-description h2 {
+    margin-top: 8px;
+    color: #2B2925;
+    font-size: 28px;
+    line-height: 1.15;
 }
 
 .object-eyebrow,
@@ -744,7 +753,21 @@ const handleSubmit2 = async () => {
     text-transform: uppercase;
 }
 
-.object-summary h1 {
+.object-info {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+    gap: 24px;
+    margin-top: 24px;
+    padding: 24px;
+}
+
+.object-info-main {
+    display: grid;
+    gap: 18px;
+    min-width: 0;
+}
+
+.object-summary-top h1 {
     margin-top: 8px;
     color: #2B2925;
     font-size: clamp(28px, 3vw, 44px);
@@ -760,6 +783,7 @@ const handleSubmit2 = async () => {
 .object-price-card {
     display: grid;
     gap: 4px;
+    max-width: 480px;
     border-radius: 8px;
     background: #E6F0EC;
     padding: 16px;
@@ -824,9 +848,13 @@ const handleSubmit2 = async () => {
 
 .object-contact-card {
     display: grid;
+    align-self: start;
     gap: 14px;
-    border-top: 1px solid #E3E1DA;
-    padding-top: 16px;
+    border: 1px solid #E3E1DA;
+    border-radius: 8px;
+    background: #FFFFFF;
+    padding: 16px;
+    box-shadow: 0 12px 30px rgba(43, 41, 37, 0.05);
 }
 
 .manager-row {
@@ -931,7 +959,8 @@ const handleSubmit2 = async () => {
     line-height: 1.15;
 }
 
-.description-card div {
+.description-card div,
+.project-description div {
     color: #6B6864;
     line-height: 1.75;
 }
@@ -959,6 +988,11 @@ const handleSubmit2 = async () => {
 .spec-list strong {
     color: #2B2925;
     text-align: right;
+}
+
+.spec-list.compact {
+    border-top: 1px solid #E3E1DA;
+    padding-top: 4px;
 }
 
 .object-empty {
@@ -1114,11 +1148,11 @@ const handleSubmit2 = async () => {
 
 @media (max-width: 1180px) {
     .object-hero,
-    .object-details {
+    .object-info {
         grid-template-columns: 1fr;
     }
 
-    .object-summary {
+    .object-specs-panel {
         position: static;
     }
 }
@@ -1136,7 +1170,8 @@ const handleSubmit2 = async () => {
         height: 260px;
     }
 
-    .object-summary,
+    .object-specs-panel,
+    .object-info,
     .detail-card {
         padding: 16px;
     }

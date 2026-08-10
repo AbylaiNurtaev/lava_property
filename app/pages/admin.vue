@@ -55,6 +55,7 @@ const emptyCategory = () => ({
 
 const activeTab = ref<AdminTab>('properties')
 const loading = ref(false)
+const initialLoading = ref(true)
 const saving = ref(false)
 const message = ref('')
 const errorMessage = ref('')
@@ -69,6 +70,15 @@ const propertyJson = ref(JSON.stringify(propertyForm.value, null, 2))
 const articleForm = ref<any>(emptyArticle())
 const categoryForm = ref<any>(emptyCategory())
 const articleEditor = ref<HTMLElement | null>(null)
+const editorRenderKey = ref(0)
+
+const loadingTitle = computed(() => initialLoading.value ? 'Загружаем админку' : 'Обновляем данные')
+
+const switchTab = async (tab: AdminTab) => {
+    activeTab.value = tab
+    await nextTick()
+    if (tab === 'articles') setArticleEditorContent(true)
+}
 
 const articleCountLabel = (count: number) => {
     const lastTwo = count % 100
@@ -127,6 +137,7 @@ const loadAdminData = async () => {
         fail(error)
     } finally {
         loading.value = false
+        initialLoading.value = false
     }
 }
 
@@ -201,9 +212,11 @@ const deleteProperty = async () => {
     }
 }
 
-const pickArticle = (article: any) => {
+const pickArticle = async (article: any) => {
     articleForm.value = structuredClone(article || emptyArticle())
-    nextTick(() => setArticleEditorContent())
+    editorRenderKey.value += 1
+    await nextTick()
+    setArticleEditorContent(true)
 }
 
 const newArticle = () => pickArticle({
@@ -211,8 +224,8 @@ const newArticle = () => pickArticle({
     categorySlug: categories.value[0]?.slug || '',
 })
 
-const setArticleEditorContent = () => {
-    if (articleEditor.value && articleEditor.value.innerHTML !== (articleForm.value.content || '')) {
+const setArticleEditorContent = (force = false) => {
+    if (articleEditor.value && (force || articleEditor.value.innerHTML !== (articleForm.value.content || ''))) {
         articleEditor.value.innerHTML = articleForm.value.content || ''
     }
 }
@@ -333,13 +346,14 @@ const seedDatabase = async () => {
         fail(error)
     } finally {
         loading.value = false
+        initialLoading.value = false
     }
 }
 
 watch(activeTab, async (tab) => {
     if (tab === 'articles') {
         await nextTick()
-        setArticleEditorContent()
+        setArticleEditorContent(true)
     }
 })
 
@@ -357,23 +371,23 @@ onMounted(loadAdminData)
 
                 <nav class="admin-tabs">
                     <button type="button" :class="{ active: activeTab === 'properties' }"
-                        @click="activeTab = 'properties'">
+                        @click="switchTab('properties')">
                         <i class="pi pi-building"></i>
                         <span>Недвижимость</span>
                         <strong>{{ properties.length }}</strong>
                     </button>
-                    <button type="button" :class="{ active: activeTab === 'articles' }" @click="activeTab = 'articles'">
+                    <button type="button" :class="{ active: activeTab === 'articles' }" @click="switchTab('articles')">
                         <i class="pi pi-file-edit"></i>
                         <span>Статьи</span>
                         <strong>{{ articles.length }}</strong>
                     </button>
                     <button type="button" :class="{ active: activeTab === 'categories' }"
-                        @click="activeTab = 'categories'">
+                        @click="switchTab('categories')">
                         <i class="pi pi-tags"></i>
                         <span>Темы</span>
                         <strong>{{ categories.length }}</strong>
                     </button>
-                    <button type="button" :class="{ active: activeTab === 'feedback' }" @click="activeTab = 'feedback'">
+                    <button type="button" :class="{ active: activeTab === 'feedback' }" @click="switchTab('feedback')">
                         <i class="pi pi-star"></i>
                         <span>Оценки</span>
                         <strong>{{ feedbackItems.length }}</strong>
@@ -393,9 +407,18 @@ onMounted(loadAdminData)
             </aside>
 
             <div class="admin-content">
+                <div v-if="loading" class="admin-loading" :class="{ initial: initialLoading }">
+                    <div class="admin-spinner"></div>
+                    <strong>{{ loadingTitle }}</strong>
+                    <span>Данные подтягиваются из MongoDB, это может занять несколько секунд.</span>
+                </div>
+
                 <section v-if="activeTab === 'properties'" class="admin-grid">
                     <aside class="admin-list">
                         <button type="button" class="new-button" @click="newProperty">+ Новый объект</button>
+                        <div v-if="initialLoading" class="list-skeleton">
+                            <span v-for="item in 8" :key="item"></span>
+                        </div>
                         <button v-for="property in properties" :key="property.id" type="button" class="list-item"
                             :class="{ active: propertyForm.id === property.id }" @click="pickProperty(property)">
                             <strong>{{ property.name || `Объект #${property.id}` }}</strong>
@@ -443,6 +466,9 @@ onMounted(loadAdminData)
                 <section v-if="activeTab === 'articles'" class="admin-grid">
                     <aside class="admin-list">
                         <button type="button" class="new-button" @click="newArticle">+ Новая статья</button>
+                        <div v-if="initialLoading" class="list-skeleton">
+                            <span v-for="item in 8" :key="item"></span>
+                        </div>
                         <button v-for="article in articles" :key="article.id" type="button" class="list-item"
                             :class="{ active: articleForm.id === article.id }" @click="pickArticle(article)">
                             <strong>{{ article.title || `Статья #${article.id}` }}</strong>
@@ -503,8 +529,8 @@ onMounted(loadAdminData)
                                     <i class="pi pi-eraser"></i>
                                 </button>
                             </div>
-                            <div ref="articleEditor" class="rich-editor" contenteditable="true" spellcheck="true"
-                                @input="syncArticleContent" @blur="syncArticleContent"></div>
+                            <div :key="editorRenderKey" ref="articleEditor" class="rich-editor" contenteditable="true"
+                                spellcheck="true" @input="syncArticleContent" @blur="syncArticleContent"></div>
                         </div>
                     </form>
                 </section>
@@ -512,6 +538,9 @@ onMounted(loadAdminData)
                 <section v-if="activeTab === 'categories'" class="admin-grid">
                     <aside class="admin-list">
                         <button type="button" class="new-button" @click="newCategory">+ Новая тема</button>
+                        <div v-if="initialLoading" class="list-skeleton">
+                            <span v-for="item in 6" :key="item"></span>
+                        </div>
                         <button v-for="category in categories" :key="category.id" type="button" class="list-item"
                             :class="{ active: categoryForm.id === category.id }" @click="pickCategory(category)">
                             <strong>{{ category.title }}</strong>
@@ -703,7 +732,50 @@ onMounted(loadAdminData)
 }
 
 .admin-content {
+    position: relative;
     min-width: 0;
+}
+
+.admin-loading {
+    position: sticky;
+    top: 16px;
+    z-index: 30;
+    display: grid;
+    grid-template-columns: 34px minmax(0, auto);
+    align-items: center;
+    gap: 4px 12px;
+    margin-bottom: 12px;
+    border: 1px solid #E3E1DA;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    padding: 14px 16px;
+    box-shadow: 0 16px 40px rgba(43, 41, 37, 0.1);
+    backdrop-filter: blur(12px);
+}
+
+.admin-loading.initial {
+    min-height: 86px;
+}
+
+.admin-loading strong {
+    color: #2B2925;
+    font-family: 'Montserrat-Bold', sans-serif;
+}
+
+.admin-loading span {
+    grid-column: 2;
+    color: #6B6864;
+    font-size: 13px;
+}
+
+.admin-spinner {
+    grid-row: span 2;
+    width: 30px;
+    height: 30px;
+    border: 3px solid #E6F0EC;
+    border-top-color: #0F5C43;
+    border-radius: 50%;
+    animation: admin-spin 0.8s linear infinite;
 }
 
 .admin-grid {
@@ -723,6 +795,23 @@ onMounted(loadAdminData)
 .new-button {
     width: 100%;
     margin-bottom: 10px;
+}
+
+.list-skeleton {
+    display: grid;
+    gap: 10px;
+}
+
+.list-skeleton span {
+    display: block;
+    height: 58px;
+    overflow: hidden;
+    border-radius: 8px;
+    background:
+        linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent),
+        #F2F0EB;
+    background-size: 220% 100%;
+    animation: admin-skeleton 1.1s ease-in-out infinite;
 }
 
 .list-item {
@@ -1015,6 +1104,22 @@ textarea {
 
     .feedback-list {
         grid-template-columns: 1fr;
+    }
+}
+
+@keyframes admin-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes admin-skeleton {
+    from {
+        background-position: 220% 0;
+    }
+
+    to {
+        background-position: -120% 0;
     }
 }
 </style>

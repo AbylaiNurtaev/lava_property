@@ -10,6 +10,8 @@ const comment = ref('')
 const sent = ref(false)
 const pending = ref(false)
 const errorMessage = ref('')
+const showPrompt = ref(false)
+let promptTimer: ReturnType<typeof window.setTimeout> | null = null
 
 const visibleRating = computed(() => hoverRating.value || rating.value)
 const isLowRating = computed(() => rating.value <= 3)
@@ -37,19 +39,40 @@ const submitRating = async () => {
 
         sent.value = true
         comment.value = ''
+        window.setTimeout(() => {
+            showPrompt.value = false
+        }, 1400)
     } catch (error: any) {
         errorMessage.value = error?.data?.message || error?.message || 'Не удалось отправить оценку'
     } finally {
         pending.value = false
     }
 }
+
+const closePrompt = () => {
+    showPrompt.value = false
+}
+
+onMounted(() => {
+    promptTimer = window.setTimeout(() => {
+        showPrompt.value = true
+    }, 10000)
+})
+
+onBeforeUnmount(() => {
+    if (promptTimer) window.clearTimeout(promptTimer)
+})
 </script>
 
 <template>
-    <section class="page-rating">
-        <div>
+    <section v-if="showPrompt" class="page-rating" aria-live="polite">
+        <button type="button" class="rating-close" aria-label="Закрыть оценку" @click="closePrompt">
+            ×
+        </button>
+
+        <div class="rating-head">
             <p>Оценка страницы</p>
-            <h2>Пожалуйста, оцените пользу информации на этой странице</h2>
+            <h2>Оцените пользу информации</h2>
         </div>
 
         <div class="rating-control" aria-label="Оценка страницы">
@@ -78,19 +101,25 @@ const submitRating = async () => {
 
 <style scoped>
 .page-rating {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 80;
     display: grid;
-    gap: 16px;
-    margin: 28px auto 0;
-    border: 1px solid rgba(43, 41, 37, 0.08);
+    width: min(360px, calc(100vw - 28px));
+    gap: 12px;
+    border: 1px solid #E3E1DA;
     border-radius: 8px;
     background: #fff;
-    padding: 22px;
-    box-shadow: 0 14px 34px rgba(43, 41, 37, 0.06);
+    padding: 18px;
+    box-shadow: 0 18px 46px rgba(43, 41, 37, 0.14);
+    animation: rating-slide-in 0.24s ease both;
 }
 
-.page-rating > div:first-child {
+.rating-head {
     display: grid;
     gap: 4px;
+    padding-right: 32px;
 }
 
 .page-rating p:first-child {
@@ -102,8 +131,29 @@ const submitRating = async () => {
 
 .page-rating h2 {
     color: #2B2925;
-    font-size: 22px;
+    font-size: 18px;
     line-height: 1.2;
+}
+
+.rating-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    border-radius: 50%;
+    background: #F2F0EB;
+    color: #6B6864;
+    font-size: 20px;
+    line-height: 1;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.rating-close:hover {
+    background: #E6F0EC;
+    color: #0F5C43;
 }
 
 .rating-control {
@@ -113,7 +163,7 @@ const submitRating = async () => {
 
 .rating-control button {
     color: #E3E1DA;
-    font-size: 34px;
+    font-size: 30px;
     line-height: 1;
     transition: color 0.15s ease, transform 0.15s ease;
 }
@@ -133,7 +183,7 @@ const submitRating = async () => {
 
 .rating-form label {
     display: grid;
-    flex: 1 1 320px;
+    flex: 1 1 100%;
     gap: 7px;
     color: #6B6864;
     font-family: 'Montserrat-Bold', sans-serif;
@@ -141,7 +191,7 @@ const submitRating = async () => {
 }
 
 .rating-form input {
-    min-height: 44px;
+    min-height: 42px;
     border: 1px solid #E3E1DA;
     border-radius: 8px;
     padding: 0 12px;
@@ -150,7 +200,7 @@ const submitRating = async () => {
 }
 
 .rating-form button {
-    min-height: 44px;
+    min-height: 40px;
     border-radius: 999px;
     padding: 0 18px;
     background: #0F5C43;
@@ -177,11 +227,25 @@ const submitRating = async () => {
 
 @media (max-width: 640px) {
     .page-rating {
-        padding: 18px;
+        right: 14px;
+        bottom: 14px;
+        padding: 16px;
     }
 
     .rating-form button {
         width: 100%;
+    }
+}
+
+@keyframes rating-slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 </style>

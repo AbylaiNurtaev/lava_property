@@ -280,7 +280,7 @@ onMounted(async () => {
 }
 
 .catalog-panel {
-    width: 50vw;
+    width: 65vw;
     min-height: 100vh;
     padding: 124px 18px 40px;
 }
@@ -440,7 +440,7 @@ onMounted(async () => {
     top: 102px;
     right: 0;
     bottom: 0;
-    width: 50vw;
+    width: 35vw;
     border-left: 1px solid #E3E1DA;
     background: #E6F0EC;
 }
@@ -550,11 +550,11 @@ onMounted(async () => {
 
 @media (max-width: 1180px) {
     .catalog-panel {
-        width: 56vw;
+        width: 62vw;
     }
 
     .desktop-map {
-        width: 44vw;
+        width: 38vw;
     }
 
     .listing-grid {

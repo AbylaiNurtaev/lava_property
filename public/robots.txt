@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /_nuxt/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /*?*
+Allow: /
+
+Sitemap: https://lavaproperty.com/sitemap.xml
+Host: lavaproperty.com

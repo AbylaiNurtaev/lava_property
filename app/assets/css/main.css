@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@font-face {
+    font-family: 'Montserrat-Light';
+    src: url('/fonts/Montserrat-Light.ttf') format('ttf'),
+        url('/fonts/Montserrat-Light.woff2') format('woff2');
+}
+
+
+@font-face {
+    font-family: 'Montserrat-ThinItalic';
+    src: url('/fonts/Montserrat-ThinItalic.ttf') format('ttf'),
+        url('/fonts/Montserrat-ThinItalic.woff2') format('woff2');
+}
+
+
+
+@font-face {
+    font-family: 'Montserrat-Regular';
+    font-style: normal;
+    src: url('/fonts/Montserrat-Regular.ttf') format('ttf'),
+        url('/fonts/Montserrat-Regular.woff2') format('woff2');
+}
+
+
+
+@font-face {
+    font-family: 'Montserrat-Bold';
+    font-weight: bold;
+    src: url('/fonts/Montserrat-Bold.ttf') format('ttf'),
+        url('/fonts/Montserrat-Bold.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Montserrat-ExtraBold';
+    src: url('/fonts/Montserrat-ExtraBold.ttf') format('ttf'),
+        url('/fonts/Montserrat-ExtraBold.woff2') format('woff2');
+}
+
+
+@font-face {
+    font-family: 'Montserrat-Black';
+    font-weight: 900;
+    src: url('/fonts/Montserrat-Black.ttf') format('ttf'),
+        url('/fonts/Montserrat-Black.woff2') format('woff2');
+}
+
+
+:root {
+    --text-p-color: #172E4D;
+    --bg-color: #F2F2F2;
+
+    --bg-color-accordion: #161616;
+    --text-gray-color: #656565;
+    --point-color: #96D630;
+    --gray-border: #3C3B3B;
+    --gray-big-color: rgba(255, 255, 255, 0.19);
+
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body,
+html {
+    background-color: var(--bg-color);
+    color: var(--text-p-color);
+    font-family: 'Montserrat-Regular';
+    /* overflow-x: hidden; */
+    scroll-behavior: smooth;
+  /* height: auto !important;
+  overflow-y: auto !important; */
+}
+img {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+p {
+    font-size: 16px;
+    font-family: 'Montserrat-Regular', sans-serif;
+
+}
+.container {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.max-container {
+      max-width: 1250px;
+    margin-left: auto;
+    margin-right: auto;
+}
+h1,
+h2,
+h3,
+h4,
+h5 {
+    font-family: 'Montserrat-Bold';
+}
+.light {
+       font-family: 'Montserrat-Light';
+}
+.bl0 {
+    font-family: 'Montserrat-Bold';
+}
+.bl {
+    font-family: 'Montserrat-Black';
+}
+.accent {
+    background-color: var(--point-color);
+}
+.accent-blue {
+    background-color:  var(--text-p-color);
+}
+.accent-text {
+    color: var(--point-color);
+}
+img {
+    pointer-events: none;
+}
+input[type='text'],
+input[type='tel'],
+input[type='number'],
+input[type='email'] {
+    font-size: 16px !important;
+}
+button {
+    font-size: 14px;
+}
+
+@media (max-width: 1024px) {
+    p {
+        font-size: 14px;
+    }
+
+    .container {
+        width: 90%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .max-container {
+        width: 97%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}

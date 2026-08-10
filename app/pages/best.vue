@@ -28,6 +28,7 @@ const emptyFilters = () => ({
 
 const filterForm = ref(emptyFilters())
 const appliedFilters = ref(emptyFilters())
+const listingImageIndexes = ref<Record<string, number>>({})
 
 const properties = computed(() =>
     (propertyStore.getAllBestProperties || []).filter((item: any) => Array.isArray(item?.coordinates))
@@ -218,6 +219,40 @@ const areaRangeLabel = computed(() => {
 })
 
 const fmt = (value: any) => value || ''
+
+const uniqueImages = (images: any[]) =>
+    Array.from(new Set(images.filter((item) => typeof item === 'string' && item.trim())))
+
+const listingImages = (property: any) =>
+    uniqueImages([
+        property?.firstImg,
+        property?.bgImg,
+        property?.bigImg,
+        ...(Array.isArray(property?.galleryExterior) ? property.galleryExterior : []),
+        ...(Array.isArray(property?.galleryInterior) ? property.galleryInterior : []),
+    ]).slice(0, 5)
+
+const listingImageIndex = (property: any) => {
+    const images = listingImages(property)
+    const index = listingImageIndexes.value[String(property?.id)] || 0
+    return Math.min(index, Math.max(images.length - 1, 0))
+}
+
+const listingImage = (property: any) =>
+    listingImages(property)[listingImageIndex(property)] || property?.firstImg || property?.bgImg || '/img/fallback.webp'
+
+const updateListingImage = (event: MouseEvent, property: any) => {
+    const images = listingImages(property)
+    if (images.length < 2) return
+
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
+    const ratio = Math.min(Math.max((event.clientX - rect.left) / rect.width, 0), 0.999)
+    listingImageIndexes.value[String(property.id)] = Math.floor(ratio * images.length)
+}
+
+const resetListingImage = (property: any) => {
+    listingImageIndexes.value[String(property?.id)] = 0
+}
 
 const cityLabel = (city: string) => {
     if (city === 'phuket') return 'Пхукет'
@@ -491,10 +526,14 @@ onMounted(async () => {
 
             <div class="listing-grid">
                 <NuxtLink v-for="item in filteredItems" :key="item.id" :to="propertyUrl(item)" class="listing-card">
-                    <div class="listing-image"
-                        :style="{ backgroundImage: `url(${item.firstImg || item.bgImg || '/img/fallback.webp'})` }">
+                    <div class="listing-image" :style="{ backgroundImage: `url(${listingImage(item)})` }"
+                        @mousemove="updateListingImage($event, item)" @mouseleave="resetListingImage(item)">
                         <span v-if="item.new" class="badge">New</span>
                         <span class="city">{{ cityLabel(item.city) }}</span>
+                        <div v-if="listingImages(item).length > 1" class="image-progress" aria-hidden="true">
+                            <span v-for="(_, imageIndex) in listingImages(item)" :key="imageIndex"
+                                :class="{ active: listingImageIndex(item) === imageIndex }"></span>
+                        </div>
                     </div>
 
                     <div class="listing-body">
@@ -807,6 +846,7 @@ onMounted(async () => {
     aspect-ratio: 1.28;
     background-size: cover;
     background-position: center;
+    transition: background-image 0.16s ease;
 }
 
 .badge,
@@ -829,6 +869,34 @@ onMounted(async () => {
     right: 10px;
     background: rgba(255, 255, 255, 0.92);
     color: #2B2925;
+}
+
+.image-progress {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    left: 10px;
+    display: grid;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+}
+
+.listing-card:hover .image-progress {
+    opacity: 1;
+}
+
+.image-progress span {
+    height: 3px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.58);
+    box-shadow: 0 1px 4px rgba(43, 41, 37, 0.22);
+}
+
+.image-progress span.active {
+    background: #FFFFFF;
 }
 
 .listing-body {

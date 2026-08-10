@@ -12,9 +12,32 @@ const pending = ref(false)
 const errorMessage = ref('')
 const showPrompt = ref(false)
 let promptTimer: ReturnType<typeof window.setTimeout> | null = null
+const feedbackStorageKey = `lava_page_feedback_${props.page.replace(/[^a-z0-9_-]/gi, '_')}`
+const feedbackCookie = useCookie<string | null>(feedbackStorageKey, {
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: 'lax',
+})
 
 const visibleRating = computed(() => hoverRating.value || rating.value)
 const isLowRating = computed(() => rating.value <= 3)
+
+const hasSubmittedFeedback = () => {
+    if (feedbackCookie.value === 'sent') return true
+    try {
+        return window.localStorage.getItem(feedbackStorageKey) === 'sent'
+    } catch {
+        return false
+    }
+}
+
+const rememberSubmittedFeedback = () => {
+    feedbackCookie.value = 'sent'
+    try {
+        window.localStorage.setItem(feedbackStorageKey, 'sent')
+    } catch {
+        // Cookie is enough if localStorage is unavailable.
+    }
+}
 
 const setRating = (value: number) => {
     rating.value = value
@@ -39,6 +62,7 @@ const submitRating = async () => {
 
         sent.value = true
         comment.value = ''
+        rememberSubmittedFeedback()
         window.setTimeout(() => {
             showPrompt.value = false
         }, 1400)
@@ -54,7 +78,10 @@ const closePrompt = () => {
 }
 
 onMounted(() => {
+    if (hasSubmittedFeedback()) return
+
     promptTimer = window.setTimeout(() => {
+        if (hasSubmittedFeedback()) return
         showPrompt.value = true
     }, 10000)
 })

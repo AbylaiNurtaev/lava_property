@@ -123,7 +123,32 @@ const genLegend = computed(() => currentProperty.value?.genLegend ?? [])
 const galleryExterior = computed(() => currentProperty.value?.galleryExterior ?? [])
 const galleryInterior = computed(() => currentProperty.value?.galleryInterior ?? [])
 
+const uniqueImages = (images: any[]) =>
+    Array.from(new Set(images.filter((item) => typeof item === 'string' && item.trim())))
+
+const propertyGallery = computed(() =>
+    uniqueImages([
+        currentProperty.value?.firstImg,
+        currentProperty.value?.bgImg,
+        currentProperty.value?.bigImg,
+        ...(galleryExterior.value || []),
+        ...(galleryInterior.value || []),
+    ])
+)
+
 const units = computed(() => currentProperty.value?.units ?? [])
+
+const summarySpecs = computed(() => {
+    const specs = currentProperty.value?.specs || {}
+    return [
+        { label: 'Тип', value: specs.propertyType },
+        { label: 'Площадь', value: specs.areaTotal },
+        { label: 'Спальни', value: specs.bedrooms },
+        { label: 'Ванные', value: specs.bathrooms },
+        { label: 'Срок сдачи', value: specs.readyDate },
+        { label: 'Отделка', value: specs.finishing },
+    ].filter((item) => item.value)
+})
 
 const fmt = {
     money(v: number) {
@@ -254,129 +279,132 @@ const handleSubmit2 = async () => {
 </script>
 
 <template>
-    <div class="relative flex items-start justify-center mx-auto bg-center bg-cover h-[700px] lg:h-[800px]" :style="{
-        backgroundImage: currentProperty?.bgImg
-            ? `url(${currentProperty.bgImg})`
-            : 'linear-gradient(135deg, #2B2925, #0B4433)',
-    }">
-        <!-- title -->
-        <div class="container w-full z-10 p-10 mt-36 text-center
-         bg-white/5 backdrop-blur-md 
-         border border-white/30 
-         rounded-[30px]">
-            <h1 class="text-2xl lg:text-5xl bl uppercase mb-4">
-                {{ currentProperty?.name || 'Объект не найден' }}
-            </h1>
-            <p class="lg:text-lg">
-                Локация: {{ currentProperty?.location || '-' }}
-            </p>
-            <p class="lg:text-lg">Цена: от {{ currentProperty?.priceDollars || '-' }}</p>
-        </div>
-    </div>
+    <main class="object-page">
+        <section v-if="currentProperty" class="object-hero container">
+            <div class="object-gallery-panel">
+                <ClientOnly>
+                    <Swiper :modules="swiperModules" :loop="propertyGallery.length > 1"
+                        :keyboard="{ enabled: true }" :pagination="{ clickable: true }"
+                        :navigation="{ nextEl: '.object-next', prevEl: '.object-prev' }"
+                        class="object-slider">
+                        <SwiperSlide v-for="(src, i) in propertyGallery" :key="src">
+                            <button type="button" class="object-slide"
+                                @click="openLightbox(src, propertyGallery, i)">
+                                <img :src="src" :alt="`${currentProperty.name} — фото ${i + 1}`" loading="eager"
+                                    decoding="async" referrerpolicy="no-referrer" />
+                            </button>
+                        </SwiperSlide>
 
-    <!-- the main block -->
-    <div class="container flex flex-col lg:flex-row gap-16 mx-auto my-10 lg:mt-20">
-        <div>
-            <h1 class="text-3xl lg:text-5xl bl uppercase mb-4">
-                {{ currentProperty?.name || 'Объект не найден' }}
-            </h1>
-            <p v-html="currentProperty?.description || ''"></p>
+                        <template #container-end>
+                            <button class="nav-btn nav-prev object-prev" aria-label="Назад">
+                                <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M15 18l-6-6 6-6" />
+                                </svg>
+                            </button>
+                            <button class="nav-btn nav-next object-next" aria-label="Вперёд">
+                                <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M9 6l6 6-6 6" />
+                                </svg>
+                            </button>
+                        </template>
+                    </Swiper>
+                </ClientOnly>
 
-            <div class="flex flex-col lg:flex-row lg:gap-6 mt-6">
-                <div class="flex gap-2 mb-2">
-                    <iconsTheLocation />
-                    <span class="bl0">{{ currentProperty?.location }}</span>
-                </div>
-                <div class="flex gap-2 mb-2">
-                    <IconsThePrice />
-                    <span class="bl0">
-                        От {{ currentProperty?.priceDollars }} {{ currentProperty?.priceTHB }}
-                    </span>
-                </div>
-            </div>
-
-            <span class="bl0 text-xl"><br />Параметры объекта:</span>
-
-            <ul class="accordion divide-y divide-gray-300 mt-4">
-                <li v-for="(value, key) in currentProperty?.specs" :key="key"
-                    class="flex justify-between py-2 border-b border-gray-200">
-                    <p class="pr-8 md:pr-0 max-w-[500px] text-gray-700">
-                        {{ translateSpecKey(key as string) }}
-                    </p>
-                    <p class="font-semibold text-gray-900">
-                        {{ value }}
-                    </p>
-                </li>
-            </ul>
-
-            <!-- рядом с параметрами объекта -->
-            <div v-if="amenities.length" class="mt-6">
-                <span class="bl0 text-xl block mb-3">Удобства комплекса:</span>
-                <ul class="flex flex-wrap gap-2">
-                    <li v-for="(amenity, i) in amenities" :key="i"
-                        class="amenity px-3 py-1 rounded-full backdrop-blur-sm border border-gray-200 text-sm">
-                        {{ amenity }}
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- the form -->
-        <div class="w-full lg:w-1/2 bg-white p-6 lg:p-10 rounded-[20px]
-         lg:sticky lg:top-24 lg:max-h-[calc(100vh-6rem)]
-         lg:flex lg:flex-col">
-            <div class="lg:overflow-y-auto lg:min-h-0">
-
-                <h2 class="light text-2xl lg:text-4xl mb-10 mt-10">
-                    Возникли вопросы?
-                </h2>
-                <div class="flex mb-2">
-                    <img class="w-[70px]" src="/img/people/anna.png" alt="Менеджер" />
-                    <img class="-ml-4 w-[70px]" src="/img/people/sergio.png" alt="Менеджер" />
-                    <img class="-ml-6 w-[70px]" src="/img/people/vika.png" alt="Менеджер" />
-                    <img class="-ml-6 w-[70px]" src="/img/people/ekat.png" alt="Менеджер" />
-                </div>
-                <p>
-                    Наши специалисты по недвижимости в Тайланде
-                    с удовольствием вас проконсультируют по любым вопросам
-                </p>
-
-                <form @submit.prevent="handleSubmit2" class="flex flex-col gap-4 w-full my-10">
-                    <div class="text-[12px] text-red-700">{{ message }}</div>
-                    <div class="relative w-full ">
-                        <span class="flag-badge" :title="countryName">
-                            {{ flag }}
-                        </span>
-                        <input v-model="phone" v-maska="'+#################'" placeholder="+" type="tel"
-                            @focus="ensurePlus" class="rounded-full w-full py-3 pr-10 pl-14 bg-gray-100 " />
-                    </div>
-                    <button
-                        class="w-full rounded-full px-3 lg:px-6 py-3 hover:opacity-90 transition-all accent text-white">
-                        Заказать звонок
+                <div class="object-photo-strip">
+                    <button v-for="(src, i) in propertyGallery.slice(0, 5)" :key="src" type="button"
+                        @click="openLightbox(src, propertyGallery, i)">
+                        <img :src="src" :alt="`${currentProperty.name} — миниатюра ${i + 1}`" loading="lazy" />
                     </button>
+                </div>
+            </div>
 
-                    <span v-if="successfully" class="block text-[10px] leading-[1.5] text-center my-6">
-                        Мы уже получили ваше сообщение!
-                    </span>
-                    <span class="block text-[10px] leading-[1.5] text-center lg:text-left">
-                        Нажимая на кнопку "Заказать звонок", вы соглашаетесь с нашей
-                        политикой конфиденциальности
-                    </span>
-                </form>
-                <div class="flex flex-col md:flex-row items-center gap-6">
-                    <p class="md:w-[400px] text-[10px] lg:text-base text-center md:text-left">
-                        Или напишите нам прямо сейчас в мессенджерах — мы всегда на связи!
-                    </p>
-                    <div class="flex gap-4">
+            <aside class="object-summary">
+                <div class="object-summary-top">
+                    <span class="object-eyebrow">Lava Property</span>
+                    <h1>{{ currentProperty.name }}</h1>
+                    <p class="object-location">{{ currentProperty.location }}</p>
+                </div>
+
+                <div class="object-price-card">
+                    <span>Стоимость от</span>
+                    <strong>{{ currentProperty.priceDollars || '-' }}</strong>
+                    <small v-if="currentProperty.priceTHB">{{ currentProperty.priceTHB }}</small>
+                </div>
+
+                <dl class="object-facts">
+                    <div v-for="item in summarySpecs" :key="item.label">
+                        <dt>{{ item.label }}</dt>
+                        <dd>{{ item.value }}</dd>
+                    </div>
+                </dl>
+
+                <div v-if="amenities.length" class="object-amenities">
+                    <span>Удобства</span>
+                    <ul>
+                        <li v-for="(amenity, i) in amenities.slice(0, 8)" :key="i">{{ amenity }}</li>
+                    </ul>
+                </div>
+
+                <div class="object-contact-card">
+                    <div class="manager-row">
+                        <div class="manager-avatars">
+                            <img src="/img/people/anna.png" alt="Менеджер" />
+                            <img src="/img/people/sergio.png" alt="Менеджер" />
+                            <img src="/img/people/vika.png" alt="Менеджер" />
+                            <img src="/img/people/ekat.png" alt="Менеджер" />
+                        </div>
+                        <p>Подберём планировку, рассчитаем доходность и ответим на вопросы.</p>
+                    </div>
+
+                    <form @submit.prevent="handleSubmit2" class="object-form">
+                        <div v-if="message" class="form-error">{{ message }}</div>
+                        <div class="phone-field">
+                            <span class="flag-badge" :title="countryName">
+                                {{ flag }}
+                            </span>
+                            <input v-model="phone" v-maska="'+#################'" placeholder="+" type="tel"
+                                @focus="ensurePlus" />
+                        </div>
+                        <button type="submit">Заказать звонок</button>
+                        <span v-if="successfully" class="form-success">
+                            Мы уже получили ваше сообщение.
+                        </span>
+                    </form>
+
+                    <div class="messenger-row">
+                        <span>Можно написать сразу:</span>
                         <IconsTheTelegram />
                         <IconsTheWhatsApp />
-                        <IconsTheMax />
                     </div>
                 </div>
-            </div>
-        </div>
+            </aside>
+        </section>
 
-    </div>
+        <section v-if="currentProperty" class="object-details container">
+            <article class="detail-card description-card">
+                <span class="section-kicker">Описание</span>
+                <h2>О проекте</h2>
+                <div v-html="currentProperty.description || ''"></div>
+            </article>
+
+            <article class="detail-card">
+                <span class="section-kicker">Характеристики</span>
+                <h2>Параметры объекта</h2>
+                <ul class="spec-list">
+                    <li v-for="(value, key) in currentProperty.specs" :key="key">
+                        <span>{{ translateSpecKey(key as string) }}</span>
+                        <strong>{{ value }}</strong>
+                    </li>
+                </ul>
+            </article>
+        </section>
+
+        <section v-else class="object-empty container">
+            <h1>Объект не найден</h1>
+            <NuxtLink to="/best">Вернуться в каталог</NuxtLink>
+        </section>
 
     <!-- SWIPER: Архитектура и территория -->
     <section v-if="galleryExterior.length" class="container my-16">
@@ -416,7 +444,7 @@ const handleSubmit2 = async () => {
 
     <!-- Генплан -->
     <div v-if="genplanList[0]" class="container mx-auto w-full flex flex-col lg:flex-row gap-10 mb-20 items-stretch">
-        <div class="flex w-full lg:w-1/2 bg-white/60 backdrop-blur-sm rounded-2xl p-4">
+        <div class="w-full lg:w-1/2 bg-white/60 backdrop-blur-sm rounded-2xl p-4">
             <div class="bl0 text-xl pl-4">
                 <br />Генплан:
                 <br /><br />
@@ -429,11 +457,12 @@ const handleSubmit2 = async () => {
                 </ol>
             </div>
         </div>
-        <div class="w-full lg:w-1/2 flex">
+
+        <div class="w-full lg:w-1/2 h-full">
             <!-- ОБЁРТКА С КЛИКОМ -->
-            <div class="w-full flex  cursor-zoom-in" @click.stop="openLightbox(genplanList[0], genplanList, 0)">
+            <div class="w-full h-full cursor-zoom-in" @click.stop="openLightbox(genplanList[0], genplanList, 0)">
                 <NuxtImg :src="genplanList[0]" :alt="`Генплан — ${currentProperty?.name}`"
-                    class="w-full h-full object-cover rounded-[30px]" />
+                    class="w-full h-full object-contain rounded-[30px]" />
             </div>
         </div>
     </div>
@@ -617,9 +646,346 @@ const handleSubmit2 = async () => {
                     </button>
         </div>
     </transition>
+    </main>
 </template>
 
 <style scoped>
+.object-page {
+    min-height: 100vh;
+    background: #FAF9F6;
+    color: #2B2925;
+    padding-top: 112px;
+}
+
+.object-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(360px, 0.65fr);
+    gap: 24px;
+    align-items: start;
+}
+
+.object-gallery-panel,
+.object-summary,
+.detail-card,
+.object-empty {
+    border: 1px solid #E3E1DA;
+    border-radius: 8px;
+    background: #FFFFFF;
+    box-shadow: 0 16px 42px rgba(43, 41, 37, 0.07);
+}
+
+.object-gallery-panel {
+    overflow: hidden;
+}
+
+.object-slider {
+    position: relative;
+    width: 100%;
+    height: clamp(420px, 58vw, 720px);
+    background: #E6F0EC;
+}
+
+.object-slide {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: zoom-in;
+}
+
+.object-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.object-photo-strip {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+    padding: 10px;
+    background: #FFFFFF;
+}
+
+.object-photo-strip button {
+    overflow: hidden;
+    aspect-ratio: 1.45;
+    border-radius: 8px;
+    background: #E6F0EC;
+}
+
+.object-photo-strip img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.18s ease;
+}
+
+.object-photo-strip button:hover img {
+    transform: scale(1.04);
+}
+
+.object-summary {
+    position: sticky;
+    top: 104px;
+    display: grid;
+    gap: 16px;
+    padding: 22px;
+}
+
+.object-eyebrow,
+.section-kicker,
+.object-price-card span,
+.object-amenities > span,
+.messenger-row span {
+    color: #0F5C43;
+    font-family: 'Montserrat-Bold', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.object-summary h1 {
+    margin-top: 8px;
+    color: #2B2925;
+    font-size: clamp(28px, 3vw, 44px);
+    line-height: 1.05;
+}
+
+.object-location {
+    margin-top: 10px;
+    color: #6B6864;
+    font-size: 16px;
+}
+
+.object-price-card {
+    display: grid;
+    gap: 4px;
+    border-radius: 8px;
+    background: #E6F0EC;
+    padding: 16px;
+}
+
+.object-price-card strong {
+    color: #2B2925;
+    font-size: 30px;
+    line-height: 1;
+}
+
+.object-price-card small {
+    color: #6B6864;
+}
+
+.object-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.object-facts div {
+    display: grid;
+    gap: 5px;
+    min-width: 0;
+    border: 1px solid #E3E1DA;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.object-facts dt {
+    color: #8A8F94;
+    font-size: 12px;
+}
+
+.object-facts dd {
+    overflow: hidden;
+    color: #2B2925;
+    font-family: 'Montserrat-Bold', sans-serif;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.object-amenities {
+    display: grid;
+    gap: 10px;
+}
+
+.object-amenities ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+}
+
+.object-amenities li {
+    border-radius: 999px;
+    background: #E6F0EC;
+    padding: 7px 10px;
+    color: #0F5C43;
+    font-size: 12px;
+}
+
+.object-contact-card {
+    display: grid;
+    gap: 14px;
+    border-top: 1px solid #E3E1DA;
+    padding-top: 16px;
+}
+
+.manager-row {
+    display: grid;
+    gap: 10px;
+}
+
+.manager-row p {
+    color: #6B6864;
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.manager-avatars {
+    display: flex;
+}
+
+.manager-avatars img {
+    width: 42px;
+    height: 42px;
+    border: 2px solid #FFFFFF;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.manager-avatars img + img {
+    margin-left: -12px;
+}
+
+.object-form {
+    display: grid;
+    gap: 10px;
+}
+
+.phone-field {
+    position: relative;
+}
+
+.phone-field input {
+    width: 100%;
+    border: 1px solid #E3E1DA;
+    border-radius: 999px;
+    background: #FAF9F6;
+    padding: 13px 16px 13px 52px;
+    color: #2B2925;
+    outline: none;
+}
+
+.phone-field input:focus {
+    border-color: #0F5C43;
+    box-shadow: 0 0 0 3px rgba(15, 92, 67, 0.12);
+}
+
+.object-form button {
+    min-height: 48px;
+    border-radius: 999px;
+    background: #0F5C43;
+    color: #FFFFFF;
+    font-family: 'Montserrat-Bold', sans-serif;
+    transition: background 0.2s ease;
+}
+
+.object-form button:hover {
+    background: #0B4433;
+}
+
+.form-error {
+    color: #d84f55;
+    font-size: 12px;
+}
+
+.form-success {
+    color: #0F5C43;
+    font-size: 12px;
+    text-align: center;
+}
+
+.messenger-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #6B6864;
+}
+
+.object-details {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+    gap: 24px;
+    margin-top: 24px;
+    margin-bottom: 72px;
+}
+
+.detail-card {
+    padding: 24px;
+}
+
+.detail-card h2 {
+    margin-top: 8px;
+    margin-bottom: 16px;
+    color: #2B2925;
+    font-size: 28px;
+    line-height: 1.15;
+}
+
+.description-card div {
+    color: #6B6864;
+    line-height: 1.75;
+}
+
+.spec-list {
+    display: grid;
+}
+
+.spec-list li {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    border-bottom: 1px solid #E3E1DA;
+    padding: 13px 0;
+}
+
+.spec-list li:last-child {
+    border-bottom: 0;
+}
+
+.spec-list span {
+    color: #6B6864;
+}
+
+.spec-list strong {
+    color: #2B2925;
+    text-align: right;
+}
+
+.object-empty {
+    padding: 160px 24px 80px;
+    text-align: center;
+}
+
+.object-empty h1 {
+    margin-bottom: 18px;
+    font-size: 36px;
+}
+
+.object-empty a {
+    color: #0F5C43;
+    font-family: 'Montserrat-Bold', sans-serif;
+}
+
+:deep(.object-slider .swiper-pagination-bullet) {
+    background: #FFFFFF;
+    opacity: 0.72;
+}
+
+:deep(.object-slider .swiper-pagination-bullet-active) {
+    background: #0F5C43;
+    opacity: 1;
+}
+
 .amenity {
     background-color: var(--point-color);
     color: white;
@@ -744,5 +1110,53 @@ const handleSubmit2 = async () => {
     user-select: none;
     pointer-events: none;
     opacity: 0.95;
+}
+
+@media (max-width: 1180px) {
+    .object-hero,
+    .object-details {
+        grid-template-columns: 1fr;
+    }
+
+    .object-summary {
+        position: static;
+    }
+}
+
+@media (max-width: 640px) {
+    .object-page {
+        padding-top: 92px;
+    }
+
+    .object-hero {
+        gap: 14px;
+    }
+
+    .object-slider {
+        height: 360px;
+    }
+
+    .object-summary,
+    .detail-card {
+        padding: 16px;
+    }
+
+    .object-facts {
+        grid-template-columns: 1fr;
+    }
+
+    .object-photo-strip {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .spec-list li {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .spec-list strong {
+        text-align: left;
+    }
 }
 </style>

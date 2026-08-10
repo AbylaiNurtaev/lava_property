@@ -1,14 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, shallowRef } from 'vue'
-import { useRoute } from 'nuxt/app'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { useRoute, useRuntimeConfig } from 'nuxt/app'
 import { usePropertyStore } from '~/stores/useProperties'
-import type { YMap } from '@yandex/ymaps3-types'
-import {
-    YandexMap,
-    YandexMapDefaultSchemeLayer,
-    YandexMapDefaultFeaturesLayer,
-    YandexMapMarker,
-} from 'vue-yandex-maps'
 
 import { Swiper, SwiperSlide } from 'swiper/vue'
 import { Navigation, Pagination, Thumbs, Keyboard, Autoplay } from 'swiper/modules'
@@ -24,6 +17,7 @@ import { vMaska } from 'maska/vue'
 // СТОР / РОУТ
 // ----------------------
 const route = useRoute()
+const config = useRuntimeConfig()
 const propertyStore = usePropertyStore()
 
 // Текущий объект по id из маршрута
@@ -77,14 +71,81 @@ const coords = computed<[number, number]>(() =>
 
 const amenities = computed(() => currentProperty.value?.amenities ?? [])
 
-const mapSettings = computed(() => ({
-    location: {
-        center: coords.value,
-        zoom: 14,
-    },
-}))
+const googleMapEl = ref<HTMLElement | null>(null)
+const mapError = ref('')
+let googleMap: google.maps.Map | null = null
+let googleMarker: google.maps.Marker | null = null
 
-const map = shallowRef<YMap | null>(null)
+const googlePosition = computed(() => {
+    const [lng, lat] = coords.value
+    return { lat, lng }
+})
+
+const objectMarkerIcon = () => ({
+    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 42 42">
+            <circle cx="21" cy="21" r="19" fill="#0F5C43" stroke="#ffffff" stroke-width="4"/>
+            <path d="M11 21.2 21 12l10 9.2v10.3a1.5 1.5 0 0 1-1.5 1.5h-5.8v-7.4h-5.4V33h-5.8a1.5 1.5 0 0 1-1.5-1.5V21.2Z" fill="#FFFFFF"/>
+        </svg>
+    `)}`,
+    scaledSize: new google.maps.Size(42, 42),
+    anchor: new google.maps.Point(21, 42),
+})
+
+const renderGoogleMap = (Google: typeof google) => {
+    if (!googleMapEl.value) return
+
+    const position = googlePosition.value
+    googleMap = new Google.maps.Map(googleMapEl.value, {
+        center: position,
+        zoom: 14,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        clickableIcons: false,
+        styles: [
+            { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
+        ],
+    })
+
+    googleMarker = new Google.maps.Marker({
+        position,
+        map: googleMap,
+        title: currentProperty.value?.name || 'Lava Property',
+        icon: objectMarkerIcon(),
+    })
+}
+
+onMounted(async () => {
+    await nextTick()
+
+    const apiKey = String(config.public.googleMapsApiKey || '')
+    if (!apiKey) {
+        mapError.value = 'Добавьте NUXT_PUBLIC_GOOGLE_MAPS_API_KEY, чтобы включить Google Maps.'
+        return
+    }
+
+    try {
+        const { setOptions, importLibrary } = await import('@googlemaps/js-api-loader')
+        setOptions({
+            key: apiKey,
+            v: 'weekly',
+            language: 'ru',
+        })
+        await importLibrary('maps')
+        await importLibrary('marker')
+        renderGoogleMap(window.google)
+    } catch (error) {
+        mapError.value = 'Google Maps не загрузилась. Проверьте API key и доступ к Maps JavaScript API.'
+        console.error(error)
+    }
+})
+
+watch(googlePosition, (position) => {
+    if (!googleMap || !googleMarker) return
+    googleMap.setCenter(position)
+    googleMarker.setPosition(position)
+})
 
 // ----------------------
 // SWIPER
@@ -548,21 +609,11 @@ const handleSubmit2 = async () => {
 
     <!-- MAP -->
     <div class="container mx-auto w-full flex flex-col-reverse lg:flex-row gap-10 my-20 items-stretch">
-        <div class="w-full lg:w-1/2 h-[400px] lg:h-auto">
-            <YandexMap v-model="map" :settings="mapSettings" width="100%" height="100%"
-                class="w-full h-full rounded-[30px] overflow-hidden">
-                <YandexMapDefaultSchemeLayer />
-                <YandexMapDefaultFeaturesLayer />
-                <YandexMapMarker :settings="{ coordinates: coords }">
-                    <div class="relative w-10 h-10 -translate-x-1/2 -translate-y-full">
-                        <img src="/img/ping.svg" alt="Метка объекта" class="pin drop-shadow-lg" />
-                        <span
-                            class="absolute -bottom-20 left-1/2 -translate-x-1/2 text-xs bg-white px-2 py-0.5 rounded shadow">
-                            {{ currentProperty?.name }}
-                        </span>
-                    </div>
-                </YandexMapMarker>
-            </YandexMap>
+        <div class="relative w-full lg:w-1/2 h-[400px] lg:h-auto">
+            <div ref="googleMapEl" class="google-object-map"></div>
+            <div v-if="mapError" class="google-object-map-error">
+                {{ mapError }}
+            </div>
         </div>
 
         <div class="w-full lg:w-1/2 lg:h-auto bg-white/60 backdrop-blur-sm rounded-2xl p-4">
@@ -730,6 +781,8 @@ const handleSubmit2 = async () => {
     display: grid;
     align-content: start;
     gap: 18px;
+    max-height: calc(clamp(300px, 40vw, 500px) + 112px);
+    overflow: auto;
     padding: 22px;
 }
 
@@ -995,6 +1048,28 @@ const handleSubmit2 = async () => {
     padding-top: 4px;
 }
 
+.google-object-map {
+    width: 100%;
+    height: 100%;
+    min-height: 400px;
+    overflow: hidden;
+    border: 1px solid #E3E1DA;
+    border-radius: 30px;
+    background: #E6F0EC;
+}
+
+.google-object-map-error {
+    position: absolute;
+    inset: 16px;
+    display: grid;
+    place-items: center;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #6B6864;
+    padding: 18px;
+    text-align: center;
+}
+
 .object-empty {
     padding: 160px 24px 80px;
     text-align: center;
@@ -1154,6 +1229,7 @@ const handleSubmit2 = async () => {
 
     .object-specs-panel {
         position: static;
+        max-height: none;
     }
 }
 

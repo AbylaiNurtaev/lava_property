@@ -36,7 +36,7 @@ const acceptCookies = () => {
 </template>
 <style lang="css" scoped>
 button:hover {
-    background-color: #172e4d;
+    background-color: #2B2925;
 }
 
 .slide-up-enter-active,

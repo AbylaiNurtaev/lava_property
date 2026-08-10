@@ -166,7 +166,7 @@ watch(() => route.fullPath, () => close())
 }
 
 .max {
-    background: #96d630;
+    background: #0F5C43;
 }
 
 /* открыто */

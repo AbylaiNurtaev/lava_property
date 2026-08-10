@@ -150,7 +150,7 @@ table h2 {
   position: absolute;
   left: 0;
   top: 0;
-  color: #96D630;
+  color: #0F5C43;
   /* салатовый (Tailwind green-500) */
   font-weight: 700;
 }

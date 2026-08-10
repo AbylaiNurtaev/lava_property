@@ -82,8 +82,8 @@ const propertyUrl = (property: any) => `/objects/${property.id}`
 const markerIcon = () => ({
     url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
         <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 42 42">
-            <circle cx="21" cy="21" r="19" fill="#96D630" stroke="#ffffff" stroke-width="4"/>
-            <path d="M11 21.2 21 12l10 9.2v10.3a1.5 1.5 0 0 1-1.5 1.5h-5.8v-7.4h-5.4V33h-5.8a1.5 1.5 0 0 1-1.5-1.5V21.2Z" fill="#172E4D"/>
+            <circle cx="21" cy="21" r="19" fill="#0F5C43" stroke="#ffffff" stroke-width="4"/>
+            <path d="M11 21.2 21 12l10 9.2v10.3a1.5 1.5 0 0 1-1.5 1.5h-5.8v-7.4h-5.4V33h-5.8a1.5 1.5 0 0 1-1.5-1.5V21.2Z" fill="#FFFFFF"/>
         </svg>
     `)}`,
     scaledSize: new google.maps.Size(42, 42),
@@ -276,7 +276,7 @@ onMounted(async () => {
 <style scoped>
 .catalog-map-page {
     min-height: 100vh;
-    background: #f2f2f2;
+    background: #FAF9F6;
 }
 
 .catalog-panel {
@@ -290,7 +290,7 @@ onMounted(async () => {
 }
 
 .catalog-eyebrow {
-    color: #96D630;
+    color: #0F5C43;
     font-family: 'Montserrat-Bold', sans-serif;
     font-size: 12px;
     text-transform: uppercase;
@@ -298,14 +298,14 @@ onMounted(async () => {
 
 .catalog-heading h1 {
     margin-top: 4px;
-    color: #172E4D;
+    color: #2B2925;
     font-size: 28px;
     line-height: 1.08;
 }
 
 .catalog-heading p:last-child {
     margin-top: 6px;
-    color: #656565;
+    color: #6B6864;
 }
 
 .filter-bar {
@@ -317,7 +317,7 @@ onMounted(async () => {
     gap: 8px;
     margin-bottom: 16px;
     padding: 12px;
-    border: 1px solid #e7e7e7;
+    border: 1px solid #E3E1DA;
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(14px);
@@ -327,16 +327,18 @@ onMounted(async () => {
     min-height: 38px;
     border-radius: 999px;
     padding: 0 14px;
-    background: #f2f2f2;
-    color: #172E4D;
+    background: #FFFFFF;
+    border: 1px solid #E3E1DA;
+    color: #2B2925;
     font-family: 'Montserrat-Bold', sans-serif;
     font-size: 13px;
     transition: background 0.2s ease, color 0.2s ease;
 }
 
 .filter-chip.active {
-    background: #96D630;
-    color: #172E4D;
+    background: #0F5C43;
+    border-color: #0F5C43;
+    color: #FFFFFF;
 }
 
 .listing-grid {
@@ -348,17 +350,17 @@ onMounted(async () => {
 .listing-card {
     display: block;
     overflow: hidden;
-    border: 1px solid #e8e8e8;
+    border: 1px solid #E3E1DA;
     border-radius: 8px;
     background: #fff;
-    color: #172E4D;
-    box-shadow: 0 12px 30px rgba(23, 46, 77, 0.06);
+    color: #2B2925;
+    box-shadow: 0 12px 30px rgba(43, 41, 37, 0.06);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .listing-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 18px 38px rgba(23, 46, 77, 0.1);
+    box-shadow: 0 18px 38px rgba(43, 41, 37, 0.1);
 }
 
 .listing-image {
@@ -380,14 +382,14 @@ onMounted(async () => {
 
 .badge {
     left: 10px;
-    background: #96D630;
-    color: #172E4D;
+    background: #0F5C43;
+    color: #FFFFFF;
 }
 
 .city {
     right: 10px;
     background: rgba(255, 255, 255, 0.92);
-    color: #172E4D;
+    color: #2B2925;
 }
 
 .listing-body {
@@ -399,14 +401,14 @@ onMounted(async () => {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    color: #656565;
+    color: #6B6864;
     font-size: 12px;
 }
 
 .listing-body h2 {
     min-height: 46px;
     margin: 8px 0;
-    color: #172E4D;
+    color: #2B2925;
     font-size: 17px;
     line-height: 1.25;
 }
@@ -418,18 +420,18 @@ onMounted(async () => {
 }
 
 .price-row strong {
-    color: #172E4D;
+    color: #2B2925;
     font-size: 20px;
 }
 
 .price-row span {
-    color: #656565;
+    color: #6B6864;
     font-size: 12px;
 }
 
 .spec-row span {
     border-radius: 999px;
-    background: #f2f2f2;
+    background: #E6F0EC;
     padding: 6px 8px;
 }
 
@@ -439,8 +441,8 @@ onMounted(async () => {
     right: 0;
     bottom: 0;
     width: 50vw;
-    border-left: 1px solid #dedede;
-    background: #dfe8df;
+    border-left: 1px solid #E3E1DA;
+    background: #E6F0EC;
 }
 
 .google-map {
@@ -455,7 +457,7 @@ onMounted(async () => {
     height: 360px;
     margin-bottom: 16px;
     border-radius: 8px;
-    background: #dfe8df;
+    background: #E6F0EC;
 }
 
 .map-error {
@@ -466,8 +468,8 @@ onMounted(async () => {
     align-items: center;
     justify-content: center;
     padding: 24px;
-    background: #e7eee7;
-    color: #172E4D;
+    background: #E6F0EC;
+    color: #2B2925;
     text-align: center;
     font-family: 'Montserrat-Bold', sans-serif;
 }
@@ -491,7 +493,7 @@ onMounted(async () => {
     width: 300px;
     overflow: hidden;
     background: #fff;
-    color: #172E4D;
+    color: #2B2925;
     text-decoration: none;
 }
 
@@ -522,7 +524,7 @@ onMounted(async () => {
 }
 
 :deep(.google-info-location) {
-    color: #656565;
+    color: #6B6864;
     font-size: 14px;
     line-height: 1.3;
 }
@@ -532,7 +534,7 @@ onMounted(async () => {
     flex-wrap: wrap;
     gap: 9px;
     margin-top: 4px;
-    color: #172E4D;
+    color: #2B2925;
     font-family: 'Montserrat-Bold', sans-serif;
     font-size: 13px;
 }
@@ -542,7 +544,7 @@ onMounted(async () => {
     padding: 48px 20px;
     border-radius: 8px;
     background: #fff;
-    color: #656565;
+    color: #6B6864;
     text-align: center;
 }
 

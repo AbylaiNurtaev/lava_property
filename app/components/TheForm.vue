@@ -160,16 +160,16 @@ const handleSubmit2 = async () => {
                 <svg width="185" height="107" viewBox="0 0 185 107" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
                         d="M64.5029 63.1309C64.5029 52.6375 73.0095 44.1309 83.5029 44.1309C93.9963 44.1309 102.503 52.6375 102.503 63.1309C102.503 73.6243 93.9963 82.1309 83.5029 82.1309C73.0095 82.1309 64.5029 73.6243 64.5029 63.1309Z"
-                        fill="#96D630" />
+                        fill="#0F5C43" />
                     <path
                         d="M1.00293 106.131C11.6696 85.6307 23.8615 51.5449 91.5979 62.0967C128.61 62.0967 177.102 37.2277 183.502 0.827674"
-                        stroke="#96D630" stroke-width="2" />
+                        stroke="#0F5C43" stroke-width="2" />
                 </svg>
 
                 <p><span class="bl0 m-0 leading-0">Как проверить застройщика недвижимости </span>в Тайланде</p>
             </div>
             <!--  -->
-            <div style="background-color:#96D630"
+            <div style="background-color:#0F5C43"
                 class="absolute lg:-bottom-20 lg:right-10 hidden lg:flex flex-col justify-start  w-[250px] items-start  p-4 lg:p-6 rounded-[20px]"
                 data-aos="fade-left" data-aos-delay="200" data-aos-once="true" data-aos-duration="1200"
                 data-aos-easing="ease-out-cubic">

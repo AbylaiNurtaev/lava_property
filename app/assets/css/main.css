@@ -50,13 +50,25 @@
 
 
 :root {
-    --text-p-color: #172E4D;
-    --bg-color: #F2F2F2;
+    --color-malachite: #0F5C43;
+    --color-malachite-dark: #0B4433;
+    --color-malachite-pale: #E6F0EC;
+    --color-graphite: #2B2925;
+    --color-graphite-muted: #6B6864;
+    --color-warm-white: #FAF9F6;
+    --color-white: #FFFFFF;
+    --color-warm-gray: #F2F0EB;
+    --color-border: #E3E1DA;
+    --color-icon-gray: #8A8F94;
+    --color-footnote: #9A9A9A;
+
+    --text-p-color: var(--color-graphite);
+    --bg-color: var(--color-warm-white);
 
     --bg-color-accordion: #161616;
-    --text-gray-color: #656565;
-    --point-color: #96D630;
-    --gray-border: #3C3B3B;
+    --text-gray-color: var(--color-graphite-muted);
+    --point-color: var(--color-malachite);
+    --gray-border: var(--color-border);
     --gray-big-color: rgba(255, 255, 255, 0.19);
 
 }
@@ -133,6 +145,22 @@ input[type='email'] {
 }
 button {
     font-size: 14px;
+}
+
+.accent,
+.accent-blue {
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+}
+
+.accent:hover,
+.accent-blue:hover {
+    background-color: var(--color-malachite-dark);
+}
+
+input,
+textarea,
+select {
+    color: var(--color-graphite);
 }
 
 @media (max-width: 1024px) {

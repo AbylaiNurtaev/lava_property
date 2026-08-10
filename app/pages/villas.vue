@@ -75,13 +75,13 @@ const fmt = (v) => v || ''
                 <!--  -->
                 <div class="buttons-right flex flex-wrap lg:gap-4">
                     <NuxtLink>
-                        <ButtonsTheGreen text="Весь каталог" text-color="white" />
+                        <ButtonsTheGreen text="Весь каталог" text-color="#FFFFFF" />
                     </NuxtLink>
                     <NuxtLink>
-                        <ButtonsTheGreen text="Апартаменты" color="#fff" />
+                        <ButtonsTheGreen text="Апартаменты" color="#FFFFFF" text-color="#2B2925" />
                     </NuxtLink>
                     <NuxtLink>
-                        <ButtonsTheGreen text="Новости" color="white" />
+                        <ButtonsTheGreen text="Новости" color="#FFFFFF" text-color="#2B2925" />
                     </NuxtLink>
                 </div>
 
@@ -102,17 +102,17 @@ const fmt = (v) => v || ''
         </div>
         <!-- 
         <div>
-            <ButtonsTheGreen text="Готовое" text-color="white" />
-            <ButtonsTheGreen text="Хорошая инвестиция" text-color="white" />
-            <ButtonsTheGreen text="Новинки рынка" text-color="#172E4D" color="#F2F2F2" />
+            <ButtonsTheGreen text="Готовое" text-color="#FFFFFF" />
+            <ButtonsTheGreen text="Хорошая инвестиция" text-color="#FFFFFF" />
+            <ButtonsTheGreen text="Новинки рынка" text-color="#2B2925" color="#FAF9F6" />
         </div> -->
         <!-- Кнопки фильтров -->
         <div class="flex flex-wrap gap-6">
             <ButtonsTheGreen2 v-for="chip in chips" :key="chip" :text="chip"
-                :color="isActive(chip) ? '#F2F2F2' : '#96D630'" :textColor="isActive(chip) ? '#172E4D' : 'white'"
+                :color="isActive(chip) ? '#0F5C43' : '#FFFFFF'" :textColor="isActive(chip) ? '#FFFFFF' : '#2B2925'"
                 :class="[
                     isActive(chip)
-                        ? 'ring-2 ring-[#96D630] ring-offset-1 scale-[1.02] transition-transform'
+                        ? 'ring-2 ring-[#0F5C43] ring-offset-1 scale-[1.02] transition-transform'
                         : 'transition-transform hover:scale-[1.02]'
                 ]" :active="isActive(chip)" @click="toggle(chip)" />
         </div>

@@ -156,7 +156,7 @@ const cities = [
 
 .hero-kicker {
   margin-bottom: 18px;
-  color: #96D630;
+  color: #0F5C43;
   font-size: 13px;
 }
 
@@ -193,8 +193,8 @@ const cities = [
 }
 
 .hero-primary {
-  background: #96D630;
-  color: #172E4D;
+  background: #0F5C43;
+  color: #2B2925;
 }
 
 .hero-secondary {
@@ -227,7 +227,7 @@ const cities = [
   height: 10px;
   margin: 11px auto 0;
   border-radius: 999px;
-  background: #96D630;
+  background: #0F5C43;
   animation: cueDrop 1.7s ease-in-out infinite;
 }
 
@@ -251,7 +251,7 @@ const cities = [
 }
 
 .section-heading p {
-  color: #96D630;
+  color: #0F5C43;
   font-size: 12px;
 }
 
@@ -363,8 +363,8 @@ const cities = [
 }
 
 .destination:hover .destination-arrow {
-  background: #96D630;
-  color: #172E4D;
+  background: #0F5C43;
+  color: #2B2925;
 }
 
 @keyframes heroDrift {

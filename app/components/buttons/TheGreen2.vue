@@ -13,12 +13,26 @@ const emit = defineEmits<{
 </script>
 
 <template>
-    <button class="px-4 py-2 rounded-full border transition" :class="[
+    <button class="lava-button-secondary px-4 py-2 rounded-full border transition" :class="[
         active ? 'ring-2 ring-offset-2  scale-[1.02]' : '',
     ]" :style="{
-        backgroundColor: props.color || '#2EB875',
-        color: props.textColor || '#fff'
+        '--button-bg': props.color || '#0F5C43',
+        '--button-color': props.textColor || '#FFFFFF'
     }" @click="emit('click')">
         {{ text }}
     </button>
 </template>
+
+<style scoped>
+.lava-button-secondary {
+    background-color: var(--button-bg);
+    color: var(--button-color);
+    border-color: #E3E1DA;
+}
+
+.lava-button-secondary:hover {
+    background-color: #0B4433;
+    border-color: #0B4433;
+    color: #FFFFFF;
+}
+</style>

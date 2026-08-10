@@ -120,8 +120,8 @@ const fmt = (v) => v || ''
 
         <div class="flex flex-wrap ">
             <ButtonsTheGreen v-for="chip in chips" :key="chip" :text="chip"
-                :color="selected.has(chip) ? '#96D630' : '#F2F2F2'"
-                :textColor="selected.has(chip) ? '#000000' : '#172E4D'" :active="selected.has(chip)"
+                :color="selected.has(chip) ? '#0F5C43' : '#FFFFFF'"
+                :textColor="selected.has(chip) ? '#FFFFFF' : '#2B2925'" :active="selected.has(chip)"
                 @click="toggle(chip)" class="" />
         </div>
 

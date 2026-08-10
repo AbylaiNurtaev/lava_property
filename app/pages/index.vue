@@ -67,16 +67,16 @@ useHead({
 
                 <div class="buttons-right flex flex-wrap lg:gap-4 mt-6 lg:mt-0">
                     <NuxtLink to="/best">
-                        <ButtonsTheGreen text="Лучшие предложения" text-color="white" />
+                        <ButtonsTheGreen text="Лучшие предложения" text-color="#FFFFFF" />
                     </NuxtLink>
                     <NuxtLink to="/villas">
-                        <ButtonsTheGreen text="Виллы" color="white" />
+                        <ButtonsTheGreen text="Виллы" color="#FFFFFF" text-color="#2B2925" />
                     </NuxtLink>
                     <NuxtLink to="/condo">
-                        <ButtonsTheGreen text="Апартаменты" color="white" />
+                        <ButtonsTheGreen text="Апартаменты" color="#FFFFFF" text-color="#2B2925" />
                     </NuxtLink>
                     <NuxtLink to="/news">
-                        <ButtonsTheGreen text="Гид" color="white" />
+                        <ButtonsTheGreen text="Гид" color="#FFFFFF" text-color="#2B2925" />
                     </NuxtLink>
                 </div>
             </div>

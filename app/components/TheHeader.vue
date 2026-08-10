@@ -215,7 +215,7 @@ onBeforeUnmount(() => {
                             <!-- B start version -->
                             <div @click="toggleDropdown"
                                 class="pl-2 pr-1 md:pl-2 flex flex-col  items-center justify-center mx-auto">
-                                <i :class="[open ? 'pi pi-times' : 'pi pi-align-justify']" style="color: #96D630"></i>
+                                <i :class="[open ? 'pi pi-times' : 'pi pi-align-justify']" style="color: #0F5C43"></i>
                                 <span
                                     class=" text-[9px] md:text-[11px] mx-auto text-center  text-gray-500 lowercase">Меню</span>
                             </div>

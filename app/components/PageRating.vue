@@ -81,11 +81,11 @@ const submitRating = async () => {
     display: grid;
     gap: 16px;
     margin: 28px auto 0;
-    border: 1px solid rgba(23, 46, 77, 0.08);
+    border: 1px solid rgba(43, 41, 37, 0.08);
     border-radius: 8px;
     background: #fff;
     padding: 22px;
-    box-shadow: 0 14px 34px rgba(23, 46, 77, 0.06);
+    box-shadow: 0 14px 34px rgba(43, 41, 37, 0.06);
 }
 
 .page-rating > div:first-child {
@@ -94,14 +94,14 @@ const submitRating = async () => {
 }
 
 .page-rating p:first-child {
-    color: #96D630;
+    color: #0F5C43;
     font-family: 'Montserrat-Bold', sans-serif;
     font-size: 12px;
     text-transform: uppercase;
 }
 
 .page-rating h2 {
-    color: #172E4D;
+    color: #2B2925;
     font-size: 22px;
     line-height: 1.2;
 }
@@ -112,7 +112,7 @@ const submitRating = async () => {
 }
 
 .rating-control button {
-    color: #d7d7d7;
+    color: #E3E1DA;
     font-size: 34px;
     line-height: 1;
     transition: color 0.15s ease, transform 0.15s ease;
@@ -120,7 +120,7 @@ const submitRating = async () => {
 
 .rating-control button:hover,
 .rating-control button.active {
-    color: #96D630;
+    color: #0F5C43;
     transform: translateY(-1px);
 }
 
@@ -135,17 +135,17 @@ const submitRating = async () => {
     display: grid;
     flex: 1 1 320px;
     gap: 7px;
-    color: #656565;
+    color: #6B6864;
     font-family: 'Montserrat-Bold', sans-serif;
     font-size: 12px;
 }
 
 .rating-form input {
     min-height: 44px;
-    border: 1px solid #e2e2e2;
+    border: 1px solid #E3E1DA;
     border-radius: 8px;
     padding: 0 12px;
-    color: #172E4D;
+    color: #2B2925;
     font-size: 14px;
 }
 
@@ -153,9 +153,13 @@ const submitRating = async () => {
     min-height: 44px;
     border-radius: 999px;
     padding: 0 18px;
-    background: #172E4D;
+    background: #0F5C43;
     color: #fff;
     font-family: 'Montserrat-Bold', sans-serif;
+}
+
+.rating-form button:hover {
+    background: #0B4433;
 }
 
 .rating-ok,

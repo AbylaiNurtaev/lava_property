@@ -50,7 +50,7 @@ const emptyArticle = () => ({
 const emptyCategory = () => ({
     title: '',
     slug: '',
-    color: '#96D630',
+    color: '#0F5C43',
 })
 
 const activeTab = ref<AdminTab>('properties')
@@ -573,7 +573,7 @@ onMounted(loadAdminData)
 .admin-page {
     min-height: 100vh;
     padding: 16px;
-    background: #f2f2f2;
+    background: #FAF9F6;
 }
 
 .admin-shell {
@@ -588,10 +588,10 @@ onMounted(loadAdminData)
 .admin-list,
 .editor,
 .feedback-panel {
-    border: 1px solid rgba(23, 46, 77, 0.09);
+    border: 1px solid rgba(43, 41, 37, 0.09);
     border-radius: 8px;
     background: #fff;
-    box-shadow: 0 14px 34px rgba(23, 46, 77, 0.06);
+    box-shadow: 0 14px 34px rgba(43, 41, 37, 0.06);
 }
 
 .admin-sidebar {
@@ -605,7 +605,7 @@ onMounted(loadAdminData)
 }
 
 .admin-brand p {
-    color: #96D630;
+    color: #0F5C43;
     font-family: 'Montserrat-Bold', sans-serif;
     font-size: 12px;
     text-transform: uppercase;
@@ -613,7 +613,7 @@ onMounted(loadAdminData)
 
 .admin-brand h1 {
     margin-top: 4px;
-    color: #172E4D;
+    color: #2B2925;
     font-size: 28px;
     line-height: 1.08;
 }
@@ -624,9 +624,15 @@ onMounted(loadAdminData)
     min-height: 42px;
     border-radius: 999px;
     padding: 0 16px;
-    background: #96D630;
-    color: #172E4D;
+    background: #0F5C43;
+    color: #FFFFFF;
     font-family: 'Montserrat-Bold', sans-serif;
+}
+
+.seed-button:hover,
+.editor button:hover,
+.new-button:hover {
+    background: #0B4433;
 }
 
 .seed-button {
@@ -637,9 +643,9 @@ onMounted(loadAdminData)
     min-height: 52px;
     margin-top: auto;
     border-radius: 8px;
-    background: #f6f6f6;
+    background: #F2F0EB;
     padding: 12px;
-    color: #656565;
+    color: #6B6864;
     font-size: 13px;
 }
 
@@ -665,13 +671,13 @@ onMounted(loadAdminData)
     min-height: 46px;
     border-radius: 8px;
     padding: 0 12px;
-    color: #172E4D;
+    color: #2B2925;
     font-family: 'Montserrat-Bold', sans-serif;
     text-align: left;
 }
 
 .admin-tabs button.active {
-    background: #172E4D;
+    background: #0F5C43;
     color: #fff;
 }
 
@@ -691,8 +697,8 @@ onMounted(loadAdminData)
     height: 28px;
     place-items: center;
     border-radius: 50%;
-    background: rgba(150, 214, 48, 0.85);
-    color: #172E4D;
+    background: #E6F0EC;
+    color: #0F5C43;
     font-size: 12px;
 }
 
@@ -725,13 +731,13 @@ onMounted(loadAdminData)
     width: 100%;
     border-radius: 8px;
     padding: 12px;
-    color: #172E4D;
+    color: #2B2925;
     text-align: left;
 }
 
 .list-item:hover,
 .list-item.active {
-    background: #f6faee;
+    background: #E6F0EC;
 }
 
 .list-item strong {
@@ -742,7 +748,7 @@ onMounted(loadAdminData)
 
 .list-item span {
     overflow: hidden;
-    color: #656565;
+    color: #6B6864;
     font-size: 12px;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -765,7 +771,7 @@ onMounted(loadAdminData)
 }
 
 .editor-head h2 {
-    color: #172E4D;
+    color: #2B2925;
     font-size: 24px;
 }
 
@@ -792,7 +798,8 @@ onMounted(loadAdminData)
 }
 
 .editor button.ghost {
-    background: #f2f2f2;
+    background: #F2F0EB;
+    color: #2B2925;
 }
 
 .rich-editor-field {
@@ -802,7 +809,7 @@ onMounted(loadAdminData)
 }
 
 .rich-editor-field > span {
-    color: #656565;
+    color: #6B6864;
     font-family: 'Montserrat-Bold', sans-serif;
     font-size: 12px;
 }
@@ -811,9 +818,9 @@ onMounted(loadAdminData)
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    border: 1px solid #e1e1e1;
+    border: 1px solid #E3E1DA;
     border-radius: 8px;
-    background: #f8f8f8;
+    background: #F2F0EB;
     padding: 8px;
 }
 
@@ -825,30 +832,30 @@ onMounted(loadAdminData)
     border-radius: 8px;
     padding: 0 10px;
     background: #fff;
-    color: #172E4D;
+    color: #2B2925;
     font-family: 'Montserrat-Bold', sans-serif;
 }
 
 .rich-editor {
     min-height: 420px;
     overflow: auto;
-    border: 1px solid #e1e1e1;
+    border: 1px solid #E3E1DA;
     border-radius: 8px;
     background: #fff;
     padding: 18px 20px;
-    color: #172E4D;
+    color: #2B2925;
     line-height: 1.65;
     outline: none;
 }
 
 .rich-editor:focus {
-    border-color: #96D630;
-    box-shadow: 0 0 0 3px rgba(150, 214, 48, 0.18);
+    border-color: #0F5C43;
+    box-shadow: 0 0 0 3px rgba(15, 92, 67, 0.16);
 }
 
 .rich-editor:empty::before {
     content: 'Начните писать статью...';
-    color: #9b9b9b;
+    color: #9A9A9A;
 }
 
 .rich-editor :deep(h2),
@@ -872,9 +879,9 @@ onMounted(loadAdminData)
 
 .empty-feedback {
     border-radius: 8px;
-    background: #f6f6f6;
+    background: #F2F0EB;
     padding: 32px;
-    color: #656565;
+    color: #6B6864;
     text-align: center;
 }
 
@@ -887,7 +894,7 @@ onMounted(loadAdminData)
 .feedback-card {
     display: grid;
     gap: 12px;
-    border: 1px solid rgba(23, 46, 77, 0.08);
+    border: 1px solid rgba(43, 41, 37, 0.08);
     border-radius: 8px;
     padding: 16px;
     background: #fff;
@@ -906,23 +913,23 @@ onMounted(loadAdminData)
 }
 
 .feedback-top strong {
-    color: #172E4D;
+    color: #2B2925;
 }
 
 .feedback-top span,
 .feedback-card small {
-    color: #656565;
+    color: #6B6864;
     font-size: 12px;
 }
 
 .feedback-rating {
-    color: #96D630;
+    color: #0F5C43;
     font-size: 22px;
     letter-spacing: 0;
 }
 
 .feedback-card p {
-    color: #172E4D;
+    color: #2B2925;
     font-size: 14px;
     line-height: 1.45;
 }
@@ -937,7 +944,7 @@ label {
     display: grid;
     gap: 7px;
     margin-bottom: 12px;
-    color: #656565;
+    color: #6B6864;
     font-family: 'Montserrat-Bold', sans-serif;
     font-size: 12px;
 }
@@ -946,11 +953,11 @@ input,
 select,
 textarea {
     width: 100%;
-    border: 1px solid #e1e1e1;
+    border: 1px solid #E3E1DA;
     border-radius: 8px;
     background: #fff;
     padding: 12px;
-    color: #172E4D;
+    color: #2B2925;
     font-family: 'Montserrat-Regular', sans-serif;
     font-size: 14px;
 }

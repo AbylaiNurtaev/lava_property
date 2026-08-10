@@ -52,7 +52,7 @@ const effectiveCity = computed<'phuket' | 'pattaya' | ''>(() => {
                 data-aos="fade-right" data-aos-delay="200" data-aos-duration="1200" data-aos-easing="ease-out-cubic">
                 <div class="flex gap-4 items-center mb-2">
                     <svg width="63" height="63" viewBox="0 0 63 63" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="0.736328" y="0.741699" width="62" height="62" rx="31" fill="#96D630" />
+                        <rect x="0.736328" y="0.741699" width="62" height="62" rx="31" fill="#0F5C43" />
                         <path
                             d="M49.5042 27.0947V23.5411C49.5042 22.721 48.9575 22.1743 48.1374 22.1743H39.5267C39.1166 22.9944 38.1599 23.5411 37.2031 23.5411C36.2464 23.5411 35.2896 22.9944 34.8796 22.1743H15.3346C14.5145 22.1743 13.9678 22.721 13.9678 23.5411V27.0947C15.6079 28.0515 16.7013 29.8283 16.7013 31.7418C16.7013 33.6553 15.6079 35.5688 13.9678 36.3889V39.9425C13.9678 40.7626 14.5145 41.3093 15.3346 41.3093H34.8796C35.2896 40.4893 36.2464 39.9425 37.2031 39.9425C38.1599 39.9425 39.1166 40.4893 39.5267 41.3093H48.1374C48.9575 41.3093 49.5042 40.7626 49.5042 39.9425V36.3889C47.8641 35.4321 46.7706 33.6553 46.7706 31.7418C46.7706 29.8283 47.8641 27.9148 49.5042 27.0947Z"
                             stroke="black" stroke-width="2" stroke-miterlimit="10" stroke-linecap="round"
@@ -77,7 +77,7 @@ const effectiveCity = computed<'phuket' | 'pattaya' | ''>(() => {
                 </NuxtLink>
             </div>
             <!--  -->
-            <div style="background-color:#96D630"
+            <div style="background-color:#0F5C43"
                 class="absolute lg:-bottom-20 lg:right-0 hidden lg:flex flex-col justify-start  w-[250px] items-start  p-4 lg:p-6 rounded-[20px]"
                 data-aos="fade-left" data-aos-delay="200" data-aos-once="true" data-aos-duration="1200"
                 data-aos-easing="ease-out-cubic">

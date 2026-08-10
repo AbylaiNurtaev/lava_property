@@ -62,16 +62,16 @@ const linkNews = '/news'
 
                 <div class="buttons-right flex flex-wrap lg:gap-4 mt-4 lg:mt-0">
                     <NuxtLink :to="linkCatalog">
-                        <ButtonsTheGreen text-color="white" />
+                        <ButtonsTheGreen text-color="#FFFFFF" />
                     </NuxtLink>
                     <NuxtLink :to="linkVillas">
-                        <ButtonsTheGreen text="Виллы" color="white" />
+                        <ButtonsTheGreen text="Виллы" color="#FFFFFF" text-color="#2B2925" />
                     </NuxtLink>
                     <NuxtLink :to="linkCondo">
-                        <ButtonsTheGreen text="Апартаменты" color="white" />
+                        <ButtonsTheGreen text="Апартаменты" color="#FFFFFF" text-color="#2B2925" />
                     </NuxtLink>
                     <NuxtLink :to="linkNews">
-                        <ButtonsTheGreen text="Гид" color="white" />
+                        <ButtonsTheGreen text="Гид" color="#FFFFFF" text-color="#2B2925" />
                     </NuxtLink>
                 </div>
 

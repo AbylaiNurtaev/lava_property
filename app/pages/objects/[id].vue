@@ -257,7 +257,7 @@ const handleSubmit2 = async () => {
     <div class="relative flex items-start justify-center mx-auto bg-center bg-cover h-[700px] lg:h-[800px]" :style="{
         backgroundImage: currentProperty?.bgImg
             ? `url(${currentProperty.bgImg})`
-            : 'linear-gradient(135deg, #172E4D, #2A4B7C)',
+            : 'linear-gradient(135deg, #2B2925, #0B4433)',
     }">
         <!-- title -->
         <div class="container w-full z-10 p-10 mt-36 text-center
@@ -554,7 +554,7 @@ const handleSubmit2 = async () => {
     <div class="relative flex items-start justify-center mx-auto bg-center bg-cover h-[700px] lg:h-[700px]" :style="{
         backgroundImage: currentProperty?.bigImg
             ? `url(${currentProperty.bigImg})`
-            : 'linear-gradient(135deg, #172E4D, #2A4B7C)',
+            : 'linear-gradient(135deg, #2B2925, #0B4433)',
     }"></div>
 
     <!-- Условия оплаты -->
@@ -639,7 +639,7 @@ const handleSubmit2 = async () => {
     background: rgba(255, 255, 255, 0.85);
     border: 1px solid rgba(0, 0, 0, 0.08);
     backdrop-filter: blur(6px);
-    color: #111827;
+    color: #2B2925;
     transition: all 0.2s ease;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
     cursor: pointer;

@@ -193,7 +193,7 @@ const swiperOptions = {
     background: rgba(255, 255, 255, 0.85);
     border: 1px solid rgba(0, 0, 0, 0.08);
     backdrop-filter: blur(6px);
-    color: #111827;
+    color: #2B2925;
     transition: all 0.2s ease;
     box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
     cursor: pointer;

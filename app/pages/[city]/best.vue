@@ -97,10 +97,10 @@ const fmt = (v) => v || ''
             <!-- Кнопки фильтров -->
             <div class="flex flex-wrap gap-6 mt-4">
                 <ButtonsTheGreen2 v-for="chip in chips" :key="chip" :text="chip"
-                    :color="isActive(chip) ? '#F2F2F2' : '#96D630'" :textColor="isActive(chip) ? '#172E4D' : 'white'"
+                    :color="isActive(chip) ? '#0F5C43' : '#FFFFFF'" :textColor="isActive(chip) ? '#FFFFFF' : '#2B2925'"
                     :class="[
                         isActive(chip)
-                            ? 'ring-2 ring-[#96D630] ring-offset-1 scale-[1.02] transition-transform'
+                            ? 'ring-2 ring-[#0F5C43] ring-offset-1 scale-[1.02] transition-transform'
                             : 'transition-transform hover:scale-[1.02]'
                     ]" :active="isActive(chip)" @click="toggle(chip)" />
             </div>

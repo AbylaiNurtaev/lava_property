@@ -107,6 +107,8 @@ const notify = (text: string) => {
     errorMessage.value = ''
 }
 
+const cloneRecord = <T,>(value: T): T => JSON.parse(JSON.stringify(value))
+
 const fail = (error: any) => {
     errorMessage.value = error?.data?.message || error?.message || 'Что-то пошло не так'
     message.value = ''
@@ -142,7 +144,7 @@ const loadAdminData = async () => {
 }
 
 const pickProperty = (property: any) => {
-    propertyForm.value = structuredClone(property || emptyProperty())
+    propertyForm.value = cloneRecord(property || emptyProperty())
     propertyJson.value = JSON.stringify(propertyForm.value, null, 2)
 }
 
@@ -213,7 +215,7 @@ const deleteProperty = async () => {
 }
 
 const pickArticle = async (article: any) => {
-    articleForm.value = structuredClone(article || emptyArticle())
+    articleForm.value = cloneRecord(article || emptyArticle())
     editorRenderKey.value += 1
     await nextTick()
     setArticleEditorContent(true)
@@ -285,7 +287,7 @@ const deleteArticle = async () => {
 }
 
 const pickCategory = (category: any) => {
-    categoryForm.value = structuredClone(category || emptyCategory())
+    categoryForm.value = cloneRecord(category || emptyCategory())
 }
 
 const newCategory = () => pickCategory(emptyCategory())

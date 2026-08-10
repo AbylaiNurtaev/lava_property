@@ -28,7 +28,6 @@ const emptyFilters = () => ({
 
 const filterForm = ref(emptyFilters())
 const appliedFilters = ref(emptyFilters())
-const currency = ref<'usd' | 'thb' | 'rub'>('usd')
 
 const properties = computed(() =>
     (propertyStore.getAllBestProperties || []).filter((item: any) => Array.isArray(item?.coordinates))
@@ -110,6 +109,60 @@ const maxNumber = (value: any) => {
 
 const normalizePrice = (value: any) => Number(String(value ?? '').replace(/[^\d]/g, '')) || 0
 
+const rangeBounds = (values: number[], fallbackMin: number, fallbackMax: number, step = 1) => {
+    const usable = values.filter((item) => Number.isFinite(item) && item > 0)
+    if (!usable.length) return { min: fallbackMin, max: fallbackMax }
+    const min = Math.max(0, Math.floor(Math.min(...usable) / step) * step)
+    const max = Math.ceil(Math.max(...usable) / step) * step
+    return min === max ? { min, max: min + step } : { min, max }
+}
+
+const priceBounds = computed(() =>
+    rangeBounds(properties.value.map((item: any) => normalizePrice(item?.priceDollars)), 0, 1000000, 1000)
+)
+
+const areaBounds = computed(() =>
+    rangeBounds(properties.value.flatMap((item: any) => [
+        minNumber(item?.specs?.areaTotal),
+        maxNumber(item?.specs?.areaTotal),
+    ]), 0, 250, 1)
+)
+
+const boundedNumber = (value: any, fallback: number, min: number, max: number) => {
+    if (value === '' || value === null || value === undefined) return fallback
+    const number = Number(value)
+    if (!Number.isFinite(number)) return fallback
+    return Math.min(Math.max(number, min), max)
+}
+
+const priceMinValue = computed({
+    get: () => boundedNumber(filterForm.value.priceMin, priceBounds.value.min, priceBounds.value.min, priceBounds.value.max),
+    set: (value: number) => {
+        filterForm.value.priceMin = String(Math.min(Number(value), priceMaxValue.value))
+    },
+})
+
+const priceMaxValue = computed({
+    get: () => boundedNumber(filterForm.value.priceMax, priceBounds.value.max, priceBounds.value.min, priceBounds.value.max),
+    set: (value: number) => {
+        filterForm.value.priceMax = String(Math.max(Number(value), priceMinValue.value))
+    },
+})
+
+const areaMinValue = computed({
+    get: () => boundedNumber(filterForm.value.areaMin, areaBounds.value.min, areaBounds.value.min, areaBounds.value.max),
+    set: (value: number) => {
+        filterForm.value.areaMin = String(Math.min(Number(value), areaMaxValue.value))
+    },
+})
+
+const areaMaxValue = computed({
+    get: () => boundedNumber(filterForm.value.areaMax, areaBounds.value.max, areaBounds.value.min, areaBounds.value.max),
+    set: (value: number) => {
+        filterForm.value.areaMax = String(Math.max(Number(value), areaMinValue.value))
+    },
+})
+
 const rangeOverlaps = (itemMin: number, itemMax: number, filterMin: any, filterMax: any) => {
     const min = Number(filterMin) || 0
     const max = Number(filterMax) || 0
@@ -121,7 +174,7 @@ const rangeOverlaps = (itemMin: number, itemMax: number, filterMin: any, filterM
 const propertyMatchesFilters = (item: any, filters: ReturnType<typeof emptyFilters>) => {
     const propertyType = String(item?.specs?.propertyType || '')
     const district = String(item?.location || '').split(',')[0]?.trim()
-    const price = normalizePrice(currency.value === 'thb' ? item?.priceTHB : item?.priceDollars)
+    const price = normalizePrice(item?.priceDollars)
     const areaMin = minNumber(item?.specs?.areaTotal)
     const areaMax = maxNumber(item?.specs?.areaTotal) || areaMin
     const bedroomsMin = minNumber(item?.specs?.bedrooms)
@@ -157,15 +210,11 @@ const resetFilters = () => {
 }
 
 const priceRangeLabel = computed(() => {
-    const min = filterForm.value.priceMin || 'от'
-    const max = filterForm.value.priceMax || 'до'
-    return `${min} - ${max}`
+    return `$${priceMinValue.value.toLocaleString('ru-RU')} - $${priceMaxValue.value.toLocaleString('ru-RU')}`
 })
 
 const areaRangeLabel = computed(() => {
-    const min = filterForm.value.areaMin || 'от'
-    const max = filterForm.value.areaMax || 'до'
-    return `${min} - ${max}`
+    return `${areaMinValue.value} - ${areaMaxValue.value} м²`
 })
 
 const fmt = (value: any) => value || ''
@@ -392,18 +441,18 @@ onMounted(async () => {
                 <div class="filter-extra-row">
                     <div class="filter-range-card">
                         <div class="range-head">
-                            <span>Цена</span>
-                            <div class="currency-toggle" aria-label="Валюта">
-                                <button type="button" :class="{ active: currency === 'usd' }" @click="currency = 'usd'">$</button>
-                                <button type="button" :class="{ active: currency === 'thb' }" @click="currency = 'thb'">฿</button>
-                                <button type="button" :class="{ active: currency === 'rub' }" @click="currency = 'rub'">₽</button>
-                            </div>
+                            <span>Цена, $</span>
                         </div>
                         <strong>{{ priceRangeLabel }}</strong>
-                        <div class="range-line"></div>
+                        <div class="range-slider">
+                            <input v-model.number="priceMinValue" type="range" :min="priceBounds.min"
+                                :max="priceBounds.max" step="1000" aria-label="Минимальная цена">
+                            <input v-model.number="priceMaxValue" type="range" :min="priceBounds.min"
+                                :max="priceBounds.max" step="1000" aria-label="Максимальная цена">
+                        </div>
                         <div class="range-inputs">
-                            <label>от<input v-model="filterForm.priceMin" inputmode="numeric" type="text" placeholder="100000"></label>
-                            <label>до<input v-model="filterForm.priceMax" inputmode="numeric" type="text" placeholder="900000"></label>
+                            <label>от<input v-model.number="priceMinValue" inputmode="numeric" type="number"></label>
+                            <label>до<input v-model.number="priceMaxValue" inputmode="numeric" type="number"></label>
                         </div>
                     </div>
 
@@ -412,10 +461,15 @@ onMounted(async () => {
                             <span>Площадь, м²</span>
                         </div>
                         <strong>{{ areaRangeLabel }}</strong>
-                        <div class="range-line"></div>
+                        <div class="range-slider">
+                            <input v-model.number="areaMinValue" type="range" :min="areaBounds.min"
+                                :max="areaBounds.max" step="1" aria-label="Минимальная площадь">
+                            <input v-model.number="areaMaxValue" type="range" :min="areaBounds.min"
+                                :max="areaBounds.max" step="1" aria-label="Максимальная площадь">
+                        </div>
                         <div class="range-inputs">
-                            <label>от<input v-model="filterForm.areaMin" inputmode="numeric" type="text" placeholder="20"></label>
-                            <label>до<input v-model="filterForm.areaMax" inputmode="numeric" type="text" placeholder="150"></label>
+                            <label>от<input v-model.number="areaMinValue" inputmode="numeric" type="number"></label>
+                            <label>до<input v-model.number="areaMaxValue" inputmode="numeric" type="number"></label>
                         </div>
                     </div>
 
@@ -513,17 +567,14 @@ onMounted(async () => {
 }
 
 .catalog-filter {
-    position: sticky;
-    top: 92px;
-    z-index: 20;
     display: grid;
     gap: 16px;
     margin-bottom: 16px;
-    padding: 0 0 16px;
+    padding: 10px 10px 18px;
     border: 1px solid #E3E1DA;
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.92);
-    box-shadow: 0 18px 42px rgba(43, 41, 37, 0.08);
+    box-shadow: 0 12px 28px rgba(43, 41, 37, 0.06);
     backdrop-filter: blur(14px);
 }
 
@@ -531,9 +582,10 @@ onMounted(async () => {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     overflow: hidden;
-    border: 12px solid #1b1b1b;
+    border: 1px solid #D8D5CD;
     border-radius: 8px;
-    background: #1b1b1b;
+    background: #FFFFFF;
+    box-shadow: 0 0 0 6px rgba(43, 41, 37, 0.06);
 }
 
 .filter-select {
@@ -584,7 +636,7 @@ onMounted(async () => {
     display: grid;
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(220px, 0.9fr);
     gap: 18px;
-    padding: 0 18px;
+    padding: 0 8px;
 }
 
 .filter-range-card {
@@ -600,64 +652,62 @@ onMounted(async () => {
     gap: 12px;
 }
 
-.currency-toggle {
-    display: inline-grid;
-    grid-template-columns: repeat(3, 32px);
-    overflow: hidden;
-    border-radius: 999px;
-    background: #F2F0EB;
-    padding: 3px;
-}
-
-.currency-toggle button {
-    display: grid;
-    height: 28px;
-    place-items: center;
-    border-radius: 50%;
-    color: #8A8F94;
-    font-family: 'Montserrat-Bold', sans-serif;
-    transition: background 0.2s ease, color 0.2s ease;
-}
-
-.currency-toggle button.active {
-    background: #FFFFFF;
-    color: #0F5C43;
-    box-shadow: 0 4px 12px rgba(43, 41, 37, 0.08);
-}
-
 .filter-range-card strong {
     color: #0F5C43;
     font-size: 19px;
     line-height: 1;
 }
 
-.range-line {
+.range-slider {
     position: relative;
-    height: 4px;
-    border-radius: 999px;
-    background: #E6F0EC;
+    height: 28px;
 }
 
-.range-line::before,
-.range-line::after {
+.range-slider::before {
     content: '';
     position: absolute;
     top: 50%;
-    width: 18px;
-    height: 18px;
-    border: 4px solid #FFFFFF;
-    border-radius: 50%;
-    background: #0F5C43;
-    box-shadow: 0 4px 12px rgba(43, 41, 37, 0.12);
+    right: 0;
+    left: 0;
+    height: 4px;
+    border-radius: 999px;
+    background: #E6F0EC;
     transform: translateY(-50%);
 }
 
-.range-line::before {
+.range-slider input {
+    position: absolute;
+    top: 0;
     left: 0;
+    width: 100%;
+    height: 28px;
+    margin: 0;
+    background: transparent;
+    pointer-events: none;
+    appearance: none;
 }
 
-.range-line::after {
-    right: 0;
+.range-slider input::-webkit-slider-thumb {
+    width: 20px;
+    height: 20px;
+    border: 4px solid #FFFFFF;
+    border-radius: 50%;
+    background: #0F5C43;
+    box-shadow: 0 4px 12px rgba(43, 41, 37, 0.16);
+    cursor: pointer;
+    pointer-events: auto;
+    appearance: none;
+}
+
+.range-slider input::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border: 4px solid #FFFFFF;
+    border-radius: 50%;
+    background: #0F5C43;
+    box-shadow: 0 4px 12px rgba(43, 41, 37, 0.16);
+    cursor: pointer;
+    pointer-events: auto;
 }
 
 .range-inputs {
@@ -981,10 +1031,6 @@ onMounted(async () => {
         display: block;
     }
 
-    .catalog-filter {
-        top: 82px;
-    }
-
     .filter-main-row {
         grid-template-columns: repeat(5, minmax(0, 1fr));
     }
@@ -1027,7 +1073,7 @@ onMounted(async () => {
 
     .filter-main-row {
         grid-template-columns: 1fr;
-        border-width: 8px;
+        box-shadow: 0 0 0 4px rgba(43, 41, 37, 0.06);
     }
 
     .filter-select,
@@ -1042,7 +1088,7 @@ onMounted(async () => {
     }
 
     .filter-extra-row {
-        padding: 0 12px 12px;
+        padding: 0 2px;
     }
 
     .range-inputs {

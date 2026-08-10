@@ -913,7 +913,6 @@ onMounted(async () => {
 }
 
 .listing-body h2 {
-    min-height: 46px;
     margin: 8px 0;
     color: #2B2925;
     font-size: 17px;

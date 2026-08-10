@@ -14,6 +14,10 @@ const selected = ref(new Set(['Все объекты']))
 const chips = ['Все объекты', 'Апартаменты', 'Виллы', 'Новинки рынка', 'Пхукет', 'Паттайя']
 const TYPE_GROUP = new Set(['Апартаменты', 'Виллы'])
 const CITY_GROUP = new Set(['Пхукет', 'Паттайя'])
+const PHUKET_MAP_VIEW = {
+    center: { lat: 7.92, lng: 98.36 },
+    zoom: 11,
+}
 
 const properties = computed(() =>
     (propertyStore.getAllBestProperties || []).filter((item: any) => Array.isArray(item?.coordinates))
@@ -109,8 +113,8 @@ const infoWindowHtml = (property: any) => `
 
 const createGoogleMap = (target: HTMLElement, Google: typeof google) => {
     const map = new Google.maps.Map(target, {
-        center: { lat: 10.42, lng: 99.34 },
-        zoom: 6,
+        center: PHUKET_MAP_VIEW.center,
+        zoom: PHUKET_MAP_VIEW.zoom,
         disableDefaultUI: false,
         mapTypeControl: false,
         streetViewControl: false,
@@ -122,38 +126,49 @@ const createGoogleMap = (target: HTMLElement, Google: typeof google) => {
         ],
     })
 
-    const bounds = new Google.maps.LatLngBounds()
     const infoWindow = new Google.maps.InfoWindow({
         disableAutoPan: false,
         maxWidth: 320,
     })
-    let removeHoverWatcher: (() => void) | null = null
+    let closeTimer: ReturnType<typeof window.setTimeout> | null = null
+    let infoHovered = false
+
+    const clearCloseTimer = () => {
+        if (!closeTimer) return
+        window.clearTimeout(closeTimer)
+        closeTimer = null
+    }
 
     const closeInfoWindow = () => {
+        clearCloseTimer()
         infoWindow.close()
-        removeHoverWatcher?.()
-        removeHoverWatcher = null
+        infoHovered = false
     }
 
-    const watchHoverExit = () => {
-        removeHoverWatcher?.()
-
-        const handleMove = (event: MouseEvent) => {
-            const targetElement = event.target as Element | null
-            if (targetElement?.closest('img[src^="data:image/svg+xml"]')) return
-            closeInfoWindow()
-        }
-
-        window.setTimeout(() => {
-            document.addEventListener('mousemove', handleMove)
-            removeHoverWatcher = () => document.removeEventListener('mousemove', handleMove)
-        }, 0)
+    const scheduleCloseInfoWindow = () => {
+        clearCloseTimer()
+        closeTimer = window.setTimeout(() => {
+            if (!infoHovered) closeInfoWindow()
+        }, 260)
     }
+
+    infoWindow.addListener('domready', () => {
+        const card = document.querySelector('.google-info-card')
+        if (!card) return
+
+        card.addEventListener('mouseenter', () => {
+            infoHovered = true
+            clearCloseTimer()
+        })
+        card.addEventListener('mouseleave', () => {
+            infoHovered = false
+            scheduleCloseInfoWindow()
+        })
+    })
 
     properties.value.forEach((property: any) => {
         const [lng, lat] = property.coordinates
         const position = { lat, lng }
-        bounds.extend(position)
 
         const marker = new Google.maps.Marker({
             position,
@@ -164,13 +179,14 @@ const createGoogleMap = (target: HTMLElement, Google: typeof google) => {
         })
 
         marker.addListener('mouseover', () => {
+            infoHovered = false
+            clearCloseTimer()
             infoWindow.setContent(infoWindowHtml(property))
             infoWindow.open({ map, anchor: marker })
-            watchHoverExit()
         })
 
         marker.addListener('mouseout', () => {
-            closeInfoWindow()
+            scheduleCloseInfoWindow()
         })
 
         marker.addListener('click', () => {
@@ -178,7 +194,8 @@ const createGoogleMap = (target: HTMLElement, Google: typeof google) => {
         })
     })
 
-    if (!bounds.isEmpty()) map.fitBounds(bounds, 64)
+    map.setCenter(PHUKET_MAP_VIEW.center)
+    map.setZoom(PHUKET_MAP_VIEW.zoom)
 }
 
 onMounted(async () => {

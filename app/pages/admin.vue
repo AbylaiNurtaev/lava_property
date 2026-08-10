@@ -419,11 +419,13 @@ onMounted(loadAdminData)
                         <div v-if="initialLoading" class="list-skeleton">
                             <span v-for="item in 8" :key="item"></span>
                         </div>
-                        <button v-for="property in properties" :key="property.id" type="button" class="list-item"
-                            :class="{ active: propertyForm.id === property.id }" @click="pickProperty(property)">
+                        <div v-for="property in properties" :key="property.id" role="button" tabindex="0" class="list-item"
+                            :class="{ active: propertyForm.id === property.id }" @pointerdown.prevent="pickProperty(property)"
+                            @keydown.enter.prevent="pickProperty(property)"
+                            @keydown.space.prevent="pickProperty(property)">
                             <strong>{{ property.name || `Объект #${property.id}` }}</strong>
                             <span>{{ property.location || property.city }}</span>
-                        </button>
+                        </div>
                     </aside>
 
                     <form class="editor" @submit.prevent="saveProperty">
@@ -469,11 +471,13 @@ onMounted(loadAdminData)
                         <div v-if="initialLoading" class="list-skeleton">
                             <span v-for="item in 8" :key="item"></span>
                         </div>
-                        <button v-for="article in articles" :key="article.id" type="button" class="list-item"
-                            :class="{ active: articleForm.id === article.id }" @click="pickArticle(article)">
+                        <div v-for="article in articles" :key="article.id" role="button" tabindex="0" class="list-item"
+                            :class="{ active: articleForm.id === article.id }" @pointerdown.prevent="pickArticle(article)"
+                            @keydown.enter.prevent="pickArticle(article)"
+                            @keydown.space.prevent="pickArticle(article)">
                             <strong>{{ article.title || `Статья #${article.id}` }}</strong>
                             <span>{{ article.categoryTitle || article.categorySlug }}</span>
-                        </button>
+                        </div>
                     </aside>
 
                     <form class="editor" @submit.prevent="saveArticle">
@@ -541,11 +545,13 @@ onMounted(loadAdminData)
                         <div v-if="initialLoading" class="list-skeleton">
                             <span v-for="item in 6" :key="item"></span>
                         </div>
-                        <button v-for="category in categories" :key="category.id" type="button" class="list-item"
-                            :class="{ active: categoryForm.id === category.id }" @click="pickCategory(category)">
+                        <div v-for="category in categories" :key="category.id" role="button" tabindex="0" class="list-item"
+                            :class="{ active: categoryForm.id === category.id }" @pointerdown.prevent="pickCategory(category)"
+                            @keydown.enter.prevent="pickCategory(category)"
+                            @keydown.space.prevent="pickCategory(category)">
                             <strong>{{ category.title }}</strong>
                             <span>{{ articleCountLabel(articles.filter((item) => item.categorySlug === category.slug).length) }}</span>
-                        </button>
+                        </div>
                     </aside>
 
                     <form class="editor compact" @submit.prevent="saveCategory">
@@ -787,6 +793,7 @@ onMounted(loadAdminData)
 .admin-list {
     position: sticky;
     top: 16px;
+    z-index: 5;
     overflow: auto;
     max-height: calc(100vh - 32px);
     padding: 12px;
@@ -821,12 +828,24 @@ onMounted(loadAdminData)
     border-radius: 8px;
     padding: 12px;
     color: #2B2925;
+    cursor: pointer;
+    outline: none;
     text-align: left;
+    user-select: none;
+    transition: background 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
 }
 
 .list-item:hover,
 .list-item.active {
     background: #E6F0EC;
+}
+
+.list-item:hover {
+    transform: translateY(-1px);
+}
+
+.list-item:focus-visible {
+    box-shadow: 0 0 0 3px rgba(15, 92, 67, 0.18);
 }
 
 .list-item strong {

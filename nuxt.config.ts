@@ -41,6 +41,10 @@ export default defineNuxtConfig({
   runtimeConfig: {
     mongodbUri: process.env.MONGODB_URI || '',
     mongodbDb: process.env.MONGODB_DB || 'lava_property',
+    awsBucketName: process.env.AWS_BUCKET_NAME || '',
+    awsAccessKey: process.env.LAVA_AWS_ACCESS_KEY || process.env.AWS_ACCESS_KEY || '',
+    awsSecretKey: process.env.LAVA_AWS_SECRET_KEY || process.env.AWS_SECRET_KEY || '',
+    awsRegion: process.env.AWS_REGION || 'eu-north-1',
     public: {
       googleMapsApiKey: process.env.NUXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
     },

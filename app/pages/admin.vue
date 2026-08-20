@@ -18,6 +18,8 @@ const emptyProperty = () => ({
     bgImg: '',
     bigImg: '',
     genImg: '',
+    genplanImages: [],
+    sketchPlanImages: [],
     description: '',
     genDesc: '',
     descriptionExterior: '',
@@ -59,6 +61,7 @@ const initialLoading = ref(true)
 const saving = ref(false)
 const message = ref('')
 const errorMessage = ref('')
+const uploadingField = ref('')
 
 const properties = ref<any[]>([])
 const categories = ref<any[]>([])
@@ -114,6 +117,279 @@ const fail = (error: any) => {
     message.value = ''
 }
 
+const normalizeUnit = (unit: any = {}) => ({
+    ...unit,
+    id: unit.id || `${Date.now()}`,
+    area: {
+        min: unit.area?.min ?? '',
+        max: unit.area?.max ?? unit.area?.min ?? '',
+    },
+    floor: {
+        min: unit.floor?.min ?? '',
+        max: unit.floor?.max ?? unit.floor?.min ?? '',
+    },
+    images: Array.isArray(unit.images) ? unit.images : [],
+})
+
+const ensurePropertyArrays = () => {
+    propertyForm.value.genplanImages = Array.isArray(propertyForm.value.genplanImages)
+        ? propertyForm.value.genplanImages
+        : []
+    propertyForm.value.sketchPlanImages = Array.isArray(propertyForm.value.sketchPlanImages)
+        ? propertyForm.value.sketchPlanImages
+        : []
+    propertyForm.value.galleryExterior = Array.isArray(propertyForm.value.galleryExterior)
+        ? propertyForm.value.galleryExterior
+        : []
+    propertyForm.value.galleryInterior = Array.isArray(propertyForm.value.galleryInterior)
+        ? propertyForm.value.galleryInterior
+        : []
+    propertyForm.value.units = Array.isArray(propertyForm.value.units)
+        ? propertyForm.value.units.map((unit: any) => normalizeUnit(unit))
+        : []
+}
+
+const propertyCoverFields = [
+    { field: 'firstImg' },
+    { field: 'bgImg' },
+    { field: 'bigImg' },
+]
+
+const propertyGalleryPhotos = computed(() => {
+    const galleryExterior = Array.isArray(propertyForm.value.galleryExterior)
+        ? propertyForm.value.galleryExterior
+        : []
+    const galleryInterior = Array.isArray(propertyForm.value.galleryInterior)
+        ? propertyForm.value.galleryInterior
+        : []
+
+    const coverPhotos = propertyCoverFields
+        .map((item) => ({
+            ...item,
+            src: propertyForm.value[item.field],
+            index: null as number | null,
+        }))
+        .filter((item) => Boolean(item.src))
+
+    const galleryPhotos = [
+        ...galleryExterior.map((src: string, index: number) => ({
+            field: 'galleryExterior',
+            src,
+            index,
+        })),
+        ...galleryInterior.map((src: string, index: number) => ({
+            field: 'galleryInterior',
+            src,
+            index,
+        })),
+    ].filter((item) => Boolean(item.src))
+
+    return [...coverPhotos, ...galleryPhotos]
+})
+
+const uploadImage = async (
+    event: Event,
+    target: 'property' | 'article',
+    field: string,
+    folder: string,
+    mode: 'replace' | 'append' = 'replace',
+) => {
+    const input = event.target as HTMLInputElement
+    const file = input.files?.[0]
+    input.value = ''
+    if (!file) return
+
+    uploadingField.value = `${target}:${field}`
+    try {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('folder', folder)
+
+        const result = await $fetch<{ url: string; savedPercent?: number }>('/api/admin/upload', {
+            method: 'POST',
+            body: formData,
+        })
+
+        if (target === 'property') {
+            if (mode === 'append') {
+                propertyForm.value[field] = Array.isArray(propertyForm.value[field])
+                    ? [...propertyForm.value[field], result.url]
+                    : [result.url]
+            } else {
+                propertyForm.value[field] = result.url
+            }
+            syncPropertyJson()
+        } else {
+            articleForm.value[field] = result.url
+        }
+
+        notify(result.savedPercent
+            ? `Изображение сжато на ${result.savedPercent}% и загружено в AWS`
+            : 'Изображение сжато и загружено в AWS')
+        return result
+    } catch (error) {
+        fail(error)
+    } finally {
+        uploadingField.value = ''
+    }
+}
+
+const uploadPropertyImage = (event: Event, field: string) =>
+    uploadImage(event, 'property', field, `properties/${propertyForm.value.id || 'new'}/${field}`)
+
+const uploadPropertyArrayImage = (event: Event, field: string) =>
+    uploadImage(event, 'property', field, `properties/${propertyForm.value.id || 'new'}/${field}`, 'append')
+
+const uploadPropertyGalleryImage = (event: Event) => {
+    const targetField = propertyForm.value.firstImg ? 'galleryExterior' : 'firstImg'
+    const mode = targetField === 'galleryExterior' ? 'append' : 'replace'
+    return uploadImage(event, 'property', targetField, `properties/${propertyForm.value.id || 'new'}/gallery`, mode)
+}
+
+const uploadPropertyGenplanImage = (event: Event) => {
+    const targetField = propertyForm.value.genImg ? 'genplanImages' : 'genImg'
+    const mode = targetField === 'genplanImages' ? 'append' : 'replace'
+    return uploadImage(event, 'property', targetField, `properties/${propertyForm.value.id || 'new'}/genplan`, mode)
+}
+
+const uploadPropertySketchPlanImage = (event: Event) =>
+    uploadImage(event, 'property', 'sketchPlanImages', `properties/${propertyForm.value.id || 'new'}/sketch-plans`, 'append')
+
+const uploadArticleImage = (event: Event, field = 'image') =>
+    uploadImage(event, 'article', field, `articles/${articleForm.value.id || 'new'}`)
+
+const isUploading = (target: 'property' | 'article', field: string) =>
+    uploadingField.value === `${target}:${field}`
+
+const removeArticleImage = () => {
+    articleForm.value.image = ''
+}
+
+const removePropertyArrayImage = (field: string, index: number) => {
+    if (!Array.isArray(propertyForm.value[field])) return
+    propertyForm.value[field] = propertyForm.value[field].filter((_: string, i: number) => i !== index)
+    syncPropertyJson()
+}
+
+const removePropertyGalleryPhoto = (photo: { field: string; index: number | null }) => {
+    if (photo.index !== null) {
+        removePropertyArrayImage(photo.field, photo.index)
+        return
+    }
+
+    propertyForm.value[photo.field] = ''
+    syncPropertyJson()
+}
+
+const genplanPhotos = computed(() => {
+    const genplanImages = Array.isArray(propertyForm.value.genplanImages)
+        ? propertyForm.value.genplanImages
+        : []
+
+    return [
+        propertyForm.value.genImg ? { field: 'genImg', src: propertyForm.value.genImg, index: null as number | null } : null,
+        ...genplanImages.map((src: string, index: number) => ({
+            field: 'genplanImages',
+            src,
+            index,
+        })),
+    ].filter(Boolean) as { field: string; src: string; index: number | null }[]
+})
+
+const removePropertyGenplanPhoto = (photo: { field: string; index: number | null }) => {
+    if (photo.index !== null) {
+        removePropertyArrayImage(photo.field, photo.index)
+        return
+    }
+
+    propertyForm.value.genImg = ''
+    syncPropertyJson()
+}
+
+const emptyUnit = () => ({
+    id: `${Date.now()}`,
+    title: '',
+    bedrooms: '',
+    bathrooms: '',
+    area: { min: '', max: '' },
+    floor: { min: '', max: '' },
+    priceTHB: '',
+    priceDollars: '',
+    description: '',
+    cover: '',
+    images: [],
+})
+
+const addPropertyUnit = () => {
+    ensurePropertyArrays()
+    propertyForm.value.units = [...propertyForm.value.units, emptyUnit()]
+    syncPropertyJson()
+}
+
+const removePropertyUnit = (index: number) => {
+    propertyForm.value.units = propertyForm.value.units.filter((_: any, i: number) => i !== index)
+    syncPropertyJson()
+}
+
+const propertyUnitImages = (unit: any) => [
+    unit?.cover,
+    ...(Array.isArray(unit?.images) ? unit.images : []),
+].filter(Boolean)
+
+const uploadPropertyUnitImage = async (event: Event, index: number) => {
+    const input = event.target as HTMLInputElement
+    const file = input.files?.[0]
+    input.value = ''
+    if (!file) return
+
+    const unit = propertyForm.value.units[index]
+    if (!unit) return
+
+    const field = `unit-${index}`
+    uploadingField.value = `property:${field}`
+    try {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('folder', `properties/${propertyForm.value.id || 'new'}/units/${unit.id || index}`)
+
+        const result = await $fetch<{ url: string; savedPercent?: number }>('/api/admin/upload', {
+            method: 'POST',
+            body: formData,
+        })
+
+        if (!unit.cover) {
+            unit.cover = result.url
+        } else {
+            unit.images = Array.isArray(unit.images) ? [...unit.images, result.url] : [result.url]
+        }
+        propertyForm.value.units = propertyForm.value.units.map((item: any, itemIndex: number) =>
+            itemIndex === index ? { ...unit } : item
+        )
+        syncPropertyJson()
+        notify(result.savedPercent
+            ? `Изображение сжато на ${result.savedPercent}% и загружено в AWS`
+            : 'Изображение сжато и загружено в AWS')
+    } catch (error) {
+        fail(error)
+    } finally {
+        uploadingField.value = ''
+    }
+}
+
+const removePropertyUnitImage = (unitIndex: number, imageIndex: number) => {
+    const unit = propertyForm.value.units[unitIndex]
+    if (!unit) return
+
+    if (imageIndex === 0) {
+        const nextImages = Array.isArray(unit.images) ? [...unit.images] : []
+        unit.cover = nextImages.shift() || ''
+        unit.images = nextImages
+    } else if (Array.isArray(unit.images)) {
+        unit.images = unit.images.filter((_: string, index: number) => index !== imageIndex - 1)
+    }
+    syncPropertyJson()
+}
+
 const loadAdminData = async () => {
     loading.value = true
     try {
@@ -145,6 +421,7 @@ const loadAdminData = async () => {
 
 const pickProperty = (property: any) => {
     propertyForm.value = cloneRecord(property || emptyProperty())
+    ensurePropertyArrays()
     propertyJson.value = JSON.stringify(propertyForm.value, null, 2)
 }
 
@@ -172,7 +449,17 @@ const saveProperty = async () => {
             bgImg: propertyForm.value.bgImg,
             bigImg: propertyForm.value.bigImg,
             genImg: propertyForm.value.genImg,
+            genplanImages: propertyForm.value.genplanImages,
+            sketchPlanImages: propertyForm.value.sketchPlanImages,
+            galleryExterior: propertyForm.value.galleryExterior,
+            galleryInterior: propertyForm.value.galleryInterior,
             description: propertyForm.value.description,
+            genDesc: propertyForm.value.genDesc,
+            descriptionExterior: propertyForm.value.descriptionExterior,
+            amenities: propertyForm.value.amenities,
+            units: propertyForm.value.units,
+            bookingConditions: propertyForm.value.bookingConditions,
+            infrastructure: propertyForm.value.infrastructure,
             specs: {
                 ...(raw.specs || {}),
                 ...(propertyForm.value.specs || {}),
@@ -396,10 +683,6 @@ onMounted(loadAdminData)
                     </button>
                 </nav>
 
-                <button type="button" class="seed-button" :disabled="loading" @click="seedDatabase">
-                    Заполнить базу
-                </button>
-
                 <div class="status-row">
                     <span v-if="loading">Загрузка...</span>
                     <span v-if="saving">Сохранение...</span>
@@ -432,7 +715,6 @@ onMounted(loadAdminData)
                         <div class="editor-head">
                             <h2>{{ propertyForm.id ? `Объект #${propertyForm.id}` : 'Новый объект' }}</h2>
                             <div>
-                                <button type="button" class="ghost" @click="syncPropertyJson">Обновить JSON</button>
                                 <button type="button" class="danger" :disabled="!propertyForm.id" @click="deleteProperty">
                                     Удалить
                                 </button>
@@ -452,15 +734,139 @@ onMounted(loadAdminData)
                             <label>Цена THB<input v-model="propertyForm.priceTHB" type="text"></label>
                             <label>Локация<input v-model="propertyForm.location" type="text"></label>
                             <label>Координаты [lng, lat]<input v-model="propertyForm.coordinates" type="text"></label>
-                            <label>Главная картинка<input v-model="propertyForm.firstImg" type="text"></label>
-                            <label>Фоновая картинка<input v-model="propertyForm.bgImg" type="text"></label>
+                            <div class="upload-label gallery-field">
+                                <span>Фотогалерея объекта</span>
+                                <div class="photo-gallery-grid">
+                                    <article v-for="photo in propertyGalleryPhotos"
+                                        :key="`${photo.field}-${photo.index ?? 'cover'}-${photo.src}`"
+                                        class="photo-gallery-card">
+                                        <img :src="photo.src" :alt="propertyForm.name || 'Фото объекта'" loading="lazy"
+                                            referrerpolicy="no-referrer">
+                                        <button type="button" class="photo-gallery-remove"
+                                            @click="removePropertyGalleryPhoto(photo)">
+                                            Удалить
+                                        </button>
+                                    </article>
+                                    <label class="photo-gallery-add"
+                                        :class="{ disabled: isUploading('property', 'firstImg') || isUploading('property', 'galleryExterior') }">
+                                        <span class="photo-gallery-plus">+</span>
+                                        <strong>
+                                            {{ isUploading('property', 'firstImg') || isUploading('property', 'galleryExterior') ? 'Загрузка...' : 'Добавить фото' }}
+                                        </strong>
+                                        <small>Изображение сожмётся и загрузится в AWS</small>
+                                        <input type="file" accept="image/*"
+                                            :disabled="isUploading('property', 'firstImg') || isUploading('property', 'galleryExterior')"
+                                            @change="uploadPropertyGalleryImage">
+                                    </label>
+                                </div>
+                            </div>
                             <label>Тип<input v-model="propertyForm.specs.propertyType" type="text"></label>
                             <label>Спальни<input v-model="propertyForm.specs.bedrooms" type="text"></label>
                             <label>Ванные<input v-model="propertyForm.specs.bathrooms" type="text"></label>
                             <label>Площадь<input v-model="propertyForm.specs.areaTotal" type="text"></label>
+                            <div class="upload-label gallery-field">
+                                <span>Генплан</span>
+                                <div class="photo-gallery-grid compact">
+                                    <article v-for="photo in genplanPhotos" :key="`${photo.field}-${photo.index ?? 'main'}-${photo.src}`"
+                                        class="photo-gallery-card">
+                                        <img :src="photo.src" alt="Генплан" loading="lazy" referrerpolicy="no-referrer">
+                                        <button type="button" class="photo-gallery-remove"
+                                            @click="removePropertyGenplanPhoto(photo)">
+                                            Удалить
+                                        </button>
+                                    </article>
+                                    <label class="photo-gallery-add"
+                                        :class="{ disabled: isUploading('property', 'genImg') || isUploading('property', 'genplanImages') }">
+                                        <span class="photo-gallery-plus">+</span>
+                                        <strong>
+                                            {{ isUploading('property', 'genImg') || isUploading('property', 'genplanImages') ? 'Загрузка...' : 'Добавить фото' }}
+                                        </strong>
+                                        <small>Отдельные изображения генплана</small>
+                                        <input type="file" accept="image/*"
+                                            :disabled="isUploading('property', 'genImg') || isUploading('property', 'genplanImages')"
+                                            @change="uploadPropertyGenplanImage">
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="upload-label gallery-field">
+                                <span>Эскизные планировки</span>
+                                <div class="photo-gallery-grid compact">
+                                    <article v-for="(src, index) in propertyForm.sketchPlanImages" :key="`${src}-${index}`"
+                                        class="photo-gallery-card">
+                                        <img :src="src" alt="Эскизная планировка" loading="lazy"
+                                            referrerpolicy="no-referrer">
+                                        <button type="button" class="photo-gallery-remove"
+                                            @click="removePropertyArrayImage('sketchPlanImages', index)">
+                                            Удалить
+                                        </button>
+                                    </article>
+                                    <label class="photo-gallery-add"
+                                        :class="{ disabled: isUploading('property', 'sketchPlanImages') }">
+                                        <span class="photo-gallery-plus">+</span>
+                                        <strong>
+                                            {{ isUploading('property', 'sketchPlanImages') ? 'Загрузка...' : 'Добавить фото' }}
+                                        </strong>
+                                        <small>Эскизы и схемы планировок</small>
+                                        <input type="file" accept="image/*"
+                                            :disabled="isUploading('property', 'sketchPlanImages')"
+                                            @change="uploadPropertySketchPlanImage">
+                                    </label>
+                                </div>
+                            </div>
                         </div>
 
                         <label>Описание<textarea v-model="propertyForm.description" rows="5"></textarea></label>
+                        <div class="units-editor">
+                            <div class="section-title-row">
+                                <h3>Типы планировок</h3>
+                                <button type="button" class="ghost-button" @click="addPropertyUnit">+ Добавить тип</button>
+                            </div>
+                            <article v-for="(unit, unitIndex) in propertyForm.units" :key="unit.id || unitIndex"
+                                class="unit-editor-card">
+                                <div class="unit-editor-head">
+                                    <strong>{{ unit.title || `Планировка #${unitIndex + 1}` }}</strong>
+                                    <button type="button" class="danger small" @click="removePropertyUnit(unitIndex)">
+                                        Удалить
+                                    </button>
+                                </div>
+                                <div class="unit-form-grid">
+                                    <label>Название<input v-model="unit.title" type="text" @input="syncPropertyJson"></label>
+                                    <label>Цена THB<input v-model="unit.priceTHB" type="text" @input="syncPropertyJson"></label>
+                                    <label>Цена $<input v-model="unit.priceDollars" type="text" @input="syncPropertyJson"></label>
+                                    <label>Спальни<input v-model="unit.bedrooms" type="text" @input="syncPropertyJson"></label>
+                                    <label>Ванные<input v-model="unit.bathrooms" type="text" @input="syncPropertyJson"></label>
+                                    <label>Площадь от<input v-model="unit.area.min" type="text" @input="syncPropertyJson"></label>
+                                    <label>Площадь до<input v-model="unit.area.max" type="text" @input="syncPropertyJson"></label>
+                                    <label>Этаж от<input v-model="unit.floor.min" type="text" @input="syncPropertyJson"></label>
+                                    <label>Этаж до<input v-model="unit.floor.max" type="text" @input="syncPropertyJson"></label>
+                                </div>
+                                <label>Описание планировки
+                                    <textarea v-model="unit.description" rows="3" @input="syncPropertyJson"></textarea>
+                                </label>
+                                <div class="photo-gallery-grid compact">
+                                    <article v-for="(src, imageIndex) in propertyUnitImages(unit)"
+                                        :key="`${unit.id || unitIndex}-${src}-${imageIndex}`" class="photo-gallery-card">
+                                        <img :src="src" :alt="unit.title || 'Планировка'" loading="lazy"
+                                            referrerpolicy="no-referrer">
+                                        <button type="button" class="photo-gallery-remove"
+                                            @click="removePropertyUnitImage(unitIndex, imageIndex)">
+                                            Удалить
+                                        </button>
+                                    </article>
+                                    <label class="photo-gallery-add"
+                                        :class="{ disabled: isUploading('property', `unit-${unitIndex}`) }">
+                                        <span class="photo-gallery-plus">+</span>
+                                        <strong>
+                                            {{ isUploading('property', `unit-${unitIndex}`) ? 'Загрузка...' : 'Добавить фото' }}
+                                        </strong>
+                                        <small>Фото конкретной планировки</small>
+                                        <input type="file" accept="image/*"
+                                            :disabled="isUploading('property', `unit-${unitIndex}`)"
+                                            @change="uploadPropertyUnitImage($event, unitIndex)">
+                                    </label>
+                                </div>
+                            </article>
+                        </div>
                         <label>Полный JSON объекта<textarea v-model="propertyJson" rows="14" spellcheck="false"></textarea></label>
                     </form>
                 </section>
@@ -501,7 +907,37 @@ onMounted(loadAdminData)
                                     </option>
                                 </select>
                             </label>
-                            <label>Картинка ссылкой<input v-model="articleForm.image" type="text"></label>
+                            <div class="upload-label gallery-field article-image-field">
+                                <span>Изображение статьи</span>
+                                <div class="article-image-manager">
+                                    <article v-if="articleForm.image" class="photo-gallery-card article-image-card">
+                                        <img :src="articleForm.image" :alt="articleForm.title || 'Изображение статьи'"
+                                            loading="lazy" referrerpolicy="no-referrer">
+                                        <div class="photo-gallery-actions">
+                                            <label class="photo-gallery-action">
+                                                {{ isUploading('article', 'image') ? 'Загрузка...' : 'Изменить' }}
+                                                <input type="file" accept="image/*"
+                                                    :disabled="isUploading('article', 'image')"
+                                                    @change="uploadArticleImage($event)">
+                                            </label>
+                                            <button type="button" class="photo-gallery-action danger-action"
+                                                @click="removeArticleImage">
+                                                Удалить
+                                            </button>
+                                        </div>
+                                    </article>
+                                    <label v-else class="photo-gallery-add article-image-add"
+                                        :class="{ disabled: isUploading('article', 'image') }">
+                                        <span class="photo-gallery-plus">+</span>
+                                        <strong>
+                                            {{ isUploading('article', 'image') ? 'Загрузка...' : 'Добавить изображение' }}
+                                        </strong>
+                                        <small>Картинка сожмётся и загрузится в AWS</small>
+                                        <input type="file" accept="image/*" :disabled="isUploading('article', 'image')"
+                                            @change="uploadArticleImage($event)">
+                                    </label>
+                                </div>
+                            </div>
                         </div>
 
                         <label>Короткое описание<textarea v-model="articleForm.excerpt" rows="3"></textarea></label>
@@ -1064,6 +1500,352 @@ textarea {
     resize: vertical;
 }
 
+.upload-label {
+    align-content: start;
+}
+
+.upload-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.upload-button {
+    position: relative;
+    display: inline-grid;
+    min-height: 38px;
+    cursor: pointer;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid #E3E1DA;
+    border-radius: 999px;
+    background: #F2F0EB;
+    padding: 0 14px;
+    color: #2B2925;
+    font-family: 'Montserrat-Bold', sans-serif;
+    font-size: 12px;
+    transition: border-color 0.16s ease, background 0.16s ease, color 0.16s ease;
+}
+
+.upload-button:hover {
+    border-color: #0F5C43;
+    background: #E6F0EC;
+    color: #0F5C43;
+}
+
+.upload-button.disabled {
+    cursor: wait;
+    opacity: 0.7;
+}
+
+.upload-button input {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+    opacity: 0;
+}
+
+.gallery-field {
+    grid-column: 1 / -1;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.gallery-field > span:first-child {
+    color: #2B2925;
+    font-family: 'Montserrat-Bold', sans-serif;
+    font-size: 15px;
+}
+
+.photo-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.photo-gallery-grid.compact {
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+}
+
+.photo-gallery-card,
+.photo-gallery-add {
+    position: relative;
+    min-height: 142px;
+    overflow: hidden;
+    border: 1px solid #E3E1DA;
+    border-radius: 10px;
+    background: #FFFFFF;
+}
+
+.photo-gallery-card img {
+    width: 100%;
+    height: 100%;
+    min-height: 142px;
+    object-fit: cover;
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.photo-gallery-card:hover img {
+    transform: scale(1.04);
+    filter: brightness(0.62);
+}
+
+.photo-gallery-tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 6px 10px;
+    color: #2B2925;
+    font-family: 'Montserrat-Bold', sans-serif;
+    font-size: 11px;
+}
+
+.photo-gallery-remove {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    cursor: pointer;
+    transform: translate(-50%, -40%);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 999px;
+    background: rgba(43, 41, 37, 0.72);
+    padding: 10px 16px;
+    color: #FFFFFF;
+    font-family: 'Montserrat-Bold', sans-serif;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.18s ease, transform 0.18s ease, background 0.18s ease;
+}
+
+.photo-gallery-card:hover .photo-gallery-remove {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+}
+
+.photo-gallery-remove:hover {
+    background: #B42318;
+}
+
+.photo-gallery-actions {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transform: translate(-50%, -40%);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.photo-gallery-card:hover .photo-gallery-actions {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+}
+
+.photo-gallery-action {
+    position: relative;
+    display: grid;
+    min-height: 40px;
+    cursor: pointer;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 999px;
+    background: rgba(43, 41, 37, 0.72);
+    padding: 0 16px;
+    color: #FFFFFF;
+    font-family: 'Montserrat-Bold', sans-serif;
+    font-size: 12px;
+    white-space: nowrap;
+    transition: background 0.18s ease;
+}
+
+.photo-gallery-action:hover {
+    background: #0F5C43;
+}
+
+.photo-gallery-action.danger-action:hover {
+    background: #B42318;
+}
+
+.photo-gallery-action input {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+    opacity: 0;
+}
+
+.photo-gallery-add {
+    display: grid;
+    cursor: pointer;
+    place-items: center;
+    align-content: center;
+    gap: 8px;
+    margin: 0;
+    border-style: dashed;
+    background: #FAF9F6;
+    color: #2B2925;
+    text-align: center;
+    transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+}
+
+.photo-gallery-add:hover {
+    transform: translateY(-1px);
+    border-color: #0F5C43;
+    background: #E6F0EC;
+}
+
+.photo-gallery-add.disabled {
+    cursor: wait;
+    opacity: 0.72;
+}
+
+.photo-gallery-add input {
+    position: absolute;
+    inset: 0;
+    cursor: pointer;
+    opacity: 0;
+}
+
+.photo-gallery-plus {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    place-items: center;
+    border-radius: 50%;
+    background: #0F5C43;
+    color: #FFFFFF;
+    font-family: 'Montserrat-Bold', sans-serif;
+    font-size: 30px;
+    line-height: 1;
+}
+
+.photo-gallery-add strong {
+    color: #2B2925;
+    font-family: 'Montserrat-Bold', sans-serif;
+    font-size: 14px;
+}
+
+.photo-gallery-add small {
+    max-width: 150px;
+    color: #6B6864;
+    font-family: 'Montserrat-Regular', sans-serif;
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.article-image-field {
+    grid-column: 1 / -1;
+}
+
+.article-image-manager {
+    display: grid;
+    grid-template-columns: minmax(240px, 420px);
+}
+
+.article-image-card,
+.article-image-add {
+    min-height: 220px;
+    max-width: 420px;
+}
+
+.article-image-card img {
+    min-height: 220px;
+}
+
+.units-editor {
+    display: grid;
+    gap: 14px;
+    margin: 6px 0 18px;
+}
+
+.section-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.section-title-row h3 {
+    color: #2B2925;
+    font-family: 'Montserrat-Bold', sans-serif;
+    font-size: 18px;
+}
+
+.ghost-button {
+    border: 1px solid #E3E1DA;
+    background: #FFFFFF;
+    color: #0F5C43;
+}
+
+.ghost-button:hover {
+    border-color: #0F5C43;
+    background: #E6F0EC;
+}
+
+.unit-editor-card {
+    display: grid;
+    gap: 14px;
+    border: 1px solid #E3E1DA;
+    border-radius: 12px;
+    background: #FFFFFF;
+    padding: 14px;
+}
+
+.unit-editor-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.unit-editor-head strong {
+    color: #2B2925;
+    font-family: 'Montserrat-Bold', sans-serif;
+    font-size: 15px;
+}
+
+.unit-form-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.media-list-field {
+    margin-bottom: 12px;
+}
+
+.media-list-field > span:first-child {
+    color: #6B6864;
+    font-family: 'Montserrat-Bold', sans-serif;
+    font-size: 12px;
+}
+
+.media-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.media-item {
+    display: grid;
+    gap: 7px;
+    border: 1px solid #E3E1DA;
+    border-radius: 8px;
+    background: #FFFFFF;
+    padding: 8px;
+}
+
+.media-item img {
+    width: 100%;
+    aspect-ratio: 1.45;
+    border-radius: 6px;
+    background: #E6F0EC;
+    object-fit: cover;
+}
+
 @media (max-width: 980px) {
     .admin-shell {
         grid-template-columns: 1fr;
@@ -1108,6 +1890,10 @@ textarea {
     }
 
     .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .unit-form-grid {
         grid-template-columns: 1fr;
     }
 

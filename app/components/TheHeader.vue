@@ -106,7 +106,6 @@ const study = computed(() => [
 
     // общие страницы — без city
     { title: 'Управление недвижимостью', path: '/rent', icon: 'new' },
-    { title: 'Контакты', path: '/contacts', icon: '' },
     { title: 'О компании', path: '/about', icon: '' },
     { title: 'Каталог Виллы', path: linkVillas.value, icon: '' },
     { title: 'Каталог Апартаменты', path: linkCondo.value, icon: '' },
@@ -159,12 +158,13 @@ onBeforeUnmount(() => {
                         : 'container py-3 bg-transparent shadow-none'
                 ]" class="">
 
-                    <div class="flex justify-between   items-center px-4 md:px-4 py-2 md:py-2 rounded-full bg-white">
+                    <div
+                        class="site-header-glass flex justify-between items-center px-4 md:px-4 py-2 md:py-2 rounded-full">
                         <div class="splash flex gap-2 lg:gap-4 items-center">
                             <ClientOnly>
                                 <NuxtLink :to="`/${effectiveCity}`">
                                     <div v-if="cityLabel"
-                                        class="accent-blue px-4 lg:px-8 py-3 text-sm lg:text-base text-white flex justify-center text-center rounded-full min-w-[80px]">
+                                        class="site-city-pill px-4 lg:px-8 py-3 text-sm lg:text-base flex justify-center text-center rounded-full min-w-[80px]">
                                         {{ cityLabel }}
                                     </div>
                                 </NuxtLink>
@@ -175,7 +175,7 @@ onBeforeUnmount(() => {
                         <!-- <IconsTheLogo class="hidden lg:block" />
                     <IconsTheLogoMini class="block lg:hidden " /> -->
                         <div class="left-menu flex items-center  lg:gap-2">
-                            <div class="accent text-white flex rounded-full">
+                            <div class="site-header-nav flex rounded-full">
                                 <NuxtLink :to="`/${effectiveCity}`"><button
                                         class="hidden lg:block w-auto lg:px-4 py-3 rounded-full transition duration-0 hover:duration-150 opacity-90  ">
                                         Главная
@@ -201,9 +201,6 @@ onBeforeUnmount(() => {
                                     </button>
                                 </NuxtLink>
 
-                                <NuxtLink to="/contacts"> <button
-                                        class="hidden lg:block w-auto lg:px-6 py-3 rounded-full transition duration-0 hover:duration-150 opacity-90  ">
-                                        Контакты </button></NuxtLink>
                             </div>
                         </div>
                         <div class="flex items-center">
@@ -214,7 +211,7 @@ onBeforeUnmount(() => {
                             </div> -->
                             <!-- B start version -->
                             <div @click="toggleDropdown"
-                                class="pl-2 pr-1 md:pl-2 flex flex-col  items-center justify-center mx-auto">
+                                class="site-menu-trigger pl-3 pr-3 py-1 flex flex-col items-center justify-center mx-auto rounded-full">
                                 <i :class="[open ? 'pi pi-times' : 'pi pi-align-justify']" style="color: #0F5C43"></i>
                                 <span
                                     class=" text-[9px] md:text-[11px] mx-auto text-center  text-gray-500 lowercase">Меню</span>
@@ -227,14 +224,13 @@ onBeforeUnmount(() => {
             <!--  mobil menu -->
             <div v-if="open" id="mobil-sidebar" class="fixed left-0 right-0 z-40 px-4"
                 :style="{ top: `${headerH + 8}px` }">
-                <div id="mobil" class="mx-auto max-w-[1200px] rounded-[20px] bg-white p-4 shadow-xl">
+                <div id="mobil" class="site-mobile-menu mx-auto max-w-[1200px] rounded-[20px] p-4 shadow-xl">
                     <ul class="flex flex-wrap justify-start my-0">
                         <li v-for="(item, index) in study" :key="index"
                             class="w-auto text-[10px] text-center   z-30 flex items-center m-1 md:m-2">
                             <NuxtLink
-                                class="text-center rounded-full w-auto px-4 md:px-6 py-4 text-white  rounded-full transition duration-0 hover:duration-150 text-[12px] md:text-[14px] accent-blue hover:bg-gray-100 hover:text-black  "
-                                :to="`${item.path}`"><i class="pi pi pi-caret-right pr-1 md:pr-2"
-                                    style="color:white"></i>{{
+                                class="mobile-menu-link text-center rounded-full w-auto px-4 md:px-6 py-4 transition duration-0 hover:duration-150 text-[12px] md:text-[14px]"
+                                :to="`${item.path}`"><i class="pi pi pi-caret-right pr-1 md:pr-2"></i>{{
                                         item.title }} <span v-if="item.icon" class="rounded-full bg-red-600 px-2 text-white">{{
                                     item.icon }}</span> </NuxtLink>
                         </li>
@@ -266,6 +262,95 @@ onBeforeUnmount(() => {
 
 .container {
     max-width: 1200px
+}
+
+.site-header-glass {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(227, 225, 218, 0.78);
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(250, 249, 246, 0.78));
+    box-shadow:
+        0 18px 44px rgba(43, 41, 37, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(18px) saturate(1.15);
+    -webkit-backdrop-filter: blur(18px) saturate(1.15);
+}
+
+.site-header-glass::before {
+    display: none;
+}
+
+.site-header-glass > * {
+    position: relative;
+    z-index: 1;
+}
+
+.site-city-pill {
+    border: 1px solid #D5E4DE;
+    background: #E6F0EC;
+    color: #0F5C43;
+    font-family: 'Montserrat-Bold', sans-serif;
+}
+
+.site-header-nav {
+    color: #2B2925;
+    gap: 4px;
+}
+
+.site-header-nav button {
+    color: #2B2925;
+    font-family: 'Montserrat-Bold', sans-serif;
+    opacity: 1;
+    transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.site-header-nav button:hover {
+    background: #E6F0EC;
+    color: #0F5C43;
+    transform: translateY(-1px);
+}
+
+.site-menu-trigger {
+    color: #0F5C43;
+    cursor: pointer;
+    transition: color 180ms ease, transform 180ms ease;
+}
+
+.site-menu-trigger:hover {
+    color: #0B4433;
+    transform: translateY(-1px);
+}
+
+.site-menu-trigger span {
+    color: #6B6864;
+    font-family: 'Montserrat-Bold', sans-serif;
+}
+
+.mobile-menu-link {
+    color: #0F5C43;
+    font-family: 'Montserrat-Bold', sans-serif;
+}
+
+.mobile-menu-link i {
+    color: #0F5C43;
+}
+
+.mobile-menu-link:hover {
+    background: rgba(230, 240, 236, 0.82);
+    color: #0B4433;
+}
+
+.mobile-menu-link:hover i {
+    color: #0B4433;
+}
+
+.site-mobile-menu {
+    border: 1px solid rgba(255, 255, 255, 0.34);
+    background:
+        linear-gradient(135deg, rgba(236, 241, 238, 0.44), rgba(216, 224, 220, 0.22));
+    backdrop-filter: blur(18px) saturate(1.35);
+    -webkit-backdrop-filter: blur(18px) saturate(1.35);
 }
 
 #mobil-sidebar {

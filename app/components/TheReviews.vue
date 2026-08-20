@@ -1,238 +1,272 @@
 <script setup>
-import { Swiper, SwiperSlide } from 'swiper/vue'
-import { Autoplay, Navigation } from 'swiper/modules'
-import 'swiper/css'                // 👈 base styles
-import 'swiper/css/autoplay'
-import 'swiper/css/navigation'
-import 'swiper/css/pagination'
-
-// ---- demo data (adjust as needed) ----
-const slides = [
+const reviews = [
     {
         id: 1,
-        title: 'Ever Prime Residences',
-        avatar: '/img/people/family2.png',
-        url: '/objects/37',
-        priceUsd: '213 461$',
-        priceThb: '6792360',
-        location: 'Карон, Пхукет',
-        cardImg: '/img/objects/37/start.webp',
-        badge: 'Семья Французовых, купили апартаменты Ever Prime Residences',
-        text:
-            '«Долго мечтали о жилье у моря, но боялись сложностей с оформлением. Команда Lava Property всё сделала “под ключ”: подбор, переговоры с застройщиком, перевод денег и документы. Теперь у нас есть квартира, куда мы приезжаем всей семьёй отдыхать.»'
+        name: 'Алексей и Марина',
+        role: 'купили апартаменты для отдыха',
+        avatar: '/img/people/f.png',
+        location: 'Банг Тао, Пхукет',
+        object: 'Siamese Bangtao',
+        text: 'Сначала сомневались, потому что покупка за границей казалась слишком сложной. Команда спокойно провела нас по каждому шагу: сравнили районы, объяснили договор, помогли с оплатой и документами. В итоге выбрали объект без спешки и лишнего давления.'
     },
     {
         id: 2,
-        title: 'Dcondo Cove',
-        avatar: '/img/people/f.png',
-        url: '/objects/35',
-        priceUsd: '76 524$',
-        priceThb: '2435000',
-        location: 'Катху, Патонг',
-        cardImg: '/img/objects/35/start.webp',
-        badge: 'Алексей и Марина, инвестировали в апартаменты',
-        text:
-            '«Покупали недвижимость как инвестицию. Lava Property подробно объяснили риски, доходность и помогли выбрать объект с хорошей арендной перспективой.»'
+        name: 'Игорь',
+        role: 'подбирал жилье для переезда',
+        avatar: '/img/people/igor.png',
+        location: 'Най Харн, Пхукет',
+        object: 'Wallaya Residence Nai Harn',
+        text: 'Мне было важно понять не только цену, но и как там будет жить каждый день. Показали варианты по районам, честно сказали, где шумно, где слабее инфраструктура, а где объект лучше держит ликвидность. Это сильно упростило решение.'
     },
     {
         id: 3,
-        title: 'Siamese Bangtao',
-        avatar: '/img/people/igor.png',
-        url: '/objects/33',
-        priceUsd: '115 336$',
-        priceThb: '3670000',
-        location: 'Банг Тао, Пхукет',
-        cardImg: '/img/objects/33/start.webp',
-        badge: 'Игорь, купил апартаменты для переезда',
-        text:
-            '«В планах переехать в Таиланд и найти дом для жизни.Ребята помогли подобрать недвижимость под мои требования, организовали просмотры и сопровождали на всех этапах сделки.Всё прошло спокойно и прозрачно.»'
+        name: 'Семья Ковалевых',
+        role: 'выбирали квартиру у моря',
+        avatar: '/img/people/family3.png',
+        location: 'Карон, Пхукет',
+        object: 'Ever Prime Residences',
+        text: 'Мы искали место для семейных поездок, поэтому смотрели на пляж, дорогу, магазины и планировку. Нам не просто прислали подборку, а отсеяли неподходящее и оставили несколько сильных вариантов. Сделка прошла спокойно.'
     },
     {
         id: 4,
-        avatar: '/img/people/family3.png',
-        title: 'VIP TROPIKA-VIP Tropika',
-        url: '/objects/32',
-        priceUsd: '108 248$',
-        priceThb: '3 444 451',
-        location: 'Банг Тао , Пхукет',
-        cardImg: '/img/objects/32/start.webp',
-        badge: 'Семья Ковалёвых, купили жильё для отдыха',
-        text:
-            '«Важно было, чтобы рядом был пляж и инфраструктура для детей. Lava Property быстро подобрали несколько вариантов и помогли выбрать лучший. Сейчас уже планируем приезжать по 2–3 раза в год и очень довольны покупкой.»'
+        name: 'Дмитрий',
+        role: 'инвестировал под аренду',
+        avatar: '/img/people/dmitriy.png',
+        location: 'Банг Тао, Пхукет',
+        object: 'The Ozone Signature',
+        text: 'Понравилось, что разговор был не про красивые обещания, а про цифры: вход, платежный график, прогноз аренды, ликвидность района. После покупки команда осталась на связи и помогла с дальнейшими вопросами по управлению.'
     },
-
     {
         id: 5,
+        name: 'Ольга',
+        role: 'покупала первую недвижимость в Таиланде',
         avatar: '/img/people/olga.png',
-        title: 'The Zero Naiyang',
-        url: '/objects/28',
-        priceUsd: '99 657$',
-        priceThb: '3 200 000',
         location: 'Найянг, Пхукет',
-        cardImg: '/img/objects/28/start.webp',
-        badge: 'Ольга, купила квартиру под сдачу',
-        text:
-            '«Боялась покупать недвижимость за границей, но здесь всё объяснили простым языком. »'
+        object: 'The Zero Naiyang',
+        text: 'Я боялась ошибиться с застройщиком и документами. Мне подробно объяснили, чем отличаются объекты, какие расходы будут после покупки и на что смотреть в договоре. Было ощущение, что меня ведут, а не просто продают.'
     },
     {
         id: 6,
-        avatar: '/img/people/dmitriy.png',
-        title: 'The Ozone Signature',
-        url: '/objects/15',
-        priceUsd: '117 926$',
-        priceThb: '3 980 000',
-        location: 'Бангтао, Пхукет',
-        cardImg: '/img/objects/15/start.webp',
-        badge: 'Дмитрий, инвестор',
-        text:
-            '«Работаю с Lava Property уже второй раз. Нравится подход: всё по цифрам, без лишних обещаний. Помогли выбрать объект с хорошей ликвидностью и потенциалом роста цены.»'
+        name: 'Семья Французовых',
+        role: 'купили апартаменты для отпуска',
+        avatar: '/img/people/family2.png',
+        location: 'Катху, Пхукет',
+        object: 'Dcondo Cove',
+        text: 'Мы хотели понятный бюджет и район, где удобно жить с детьми. Lava Property быстро собрали варианты, организовали просмотры и помогли выбрать без лишней суеты. Особенно ценно, что все нюансы проговаривали заранее.'
     }
 ]
 
-// ---- swiper options ----
-const swiperOptions = {
-    modules: [Autoplay, Navigation],
-    slidesPerView: 1,
-    spaceBetween: 20,
-    autoplay: { delay: 5000, disableOnInteraction: false },
-    loop: true,
-    autoHeight: true,
-    navigation: {
-        prevEl: '.int-prev',
-        nextEl: '.int-next',
-    },
-    breakpoints: {
-        768: { slidesPerView: 1, spaceBetween: 20 },
-        1024: { slidesPerView: 2, spaceBetween: 20 },
-        1250: { slidesPerView: 3, spaceBetween: 40 }
-    }
-}
 </script>
 
 <template>
-    <div class="container">
-        <div class="flex justify-center mb-2 mt-10 xl:mt-20">
-            <img class="w-[70px] ml-0" src="/img/people/img.png" alt="Отзывы про LavaProperty">
-            <img class="w-[70px] -ml-4 " src="/img/people/f.png" alt="Отзывы про LavaProperty">
-            <img class="w-[70px] -ml-6" src="/img/people/family2.png" alt="Отзывы про LavaProperty">
-            <img class="w-[70px] -ml-6" src="/img/people/family3.png" alt="Отзывы про LavaProperty">
+    <section class="reviews-section">
+        <div class="container">
+            <div class="reviews-heading">
+                <div class="reviews-avatars" aria-hidden="true">
+                    <img src="/img/people/img.png" alt="">
+                    <img src="/img/people/f.png" alt="">
+                    <img src="/img/people/family2.png" alt="">
+                    <img src="/img/people/family3.png" alt="">
+                </div>
+                <span class="reviews-kicker">Отзывы клиентов</span>
+                <h2>Истории людей, которые уже прошли сделку с Lava Property</h2>
+            </div>
         </div>
-        <h2 class="light text-center text-2xl lg:text-4xl mb-10  ">
-            <span class="bl0">Про результат:</span><br>
-            реальные истории клиентов Lava Property
-        </h2>
-    </div>
-    <div class="container mx-auto  flex  lg:flex-row justify-between gap-6 lg:gap-10 h-full">
 
-        <ClientOnly>
-            <Swiper v-bind="swiperOptions">
-                <SwiperSlide v-for="s in slides" :key="s.id">
-                    <div
-                        class=" flex flex-col items-stretch justify-between lg:flex-row relative mx-auto my-4 lg:my-12 bg-white p-8 lg:p-10 rounded-[30px] min-h-[400px]  lg:min-h-[460px]">
-                        <!-- left text -->
-                        <div class="">
-                            <div class="flex items-center gap-2">
-                                <img class="w-[70px] -ml-4" :src="s.avatar" alt="Отзывы про LavaProperty">
-                                <span class="bl0 block text-sm whitespace-normal break-words">{{ s.badge }}</span>
-                            </div>
-                            <!-- your stars svg -->
-                            <svg class="my-6" width="187" height="31" viewBox="0 0 187 31" fill="none"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M54.7542 0.138672L58.108 10.4606H68.9612L60.1808 16.8399L63.5346 27.1619L54.7542 20.7826L45.9739 27.1619L49.3277 16.8399L40.5473 10.4606H51.4004L54.7542 0.138672Z"
-                                    fill="#FFDC41" />
-                                <path
-                                    d="M15.878 0.138672L19.2318 10.4606H30.085L21.3046 16.8399L24.6584 27.1619L15.878 20.7826L7.09763 27.1619L10.4514 16.8399L1.67106 10.4606H12.5242L15.878 0.138672Z"
-                                    fill="#FFDC41" />
-                                <path
-                                    d="M93.6302 0.138672L96.984 10.4606H107.837L99.0568 16.8399L102.411 27.1619L93.6302 20.7826L84.8498 27.1619L88.2036 16.8399L79.4233 10.4606H90.2764L93.6302 0.138672Z"
-                                    fill="#FFDC41" />
-                                <path
-                                    d="M132.506 0.138672L135.86 10.4606H146.713L137.933 16.8399L141.287 27.1619L132.506 20.7826L123.726 27.1619L127.08 16.8399L118.299 10.4606H129.153L132.506 0.138672Z"
-                                    fill="#FFDC41" />
-                                <path
-                                    d="M171.383 0.138672L174.736 10.4606H185.59L176.809 16.8399L180.163 27.1619L171.383 20.7826L162.602 27.1619L165.956 16.8399L157.176 10.4606H168.029L171.383 0.138672Z"
-                                    fill="#FFDC41" />
-                            </svg>
-
-                            <p class="w-full mb-4  whitespace-normal break-words">
-                                {{ s.text }}
-                            </p>
-
+        <div class="reviews-scroll" aria-label="Отзывы клиентов Lava Property">
+            <div class="reviews-track">
+                <article v-for="review in reviews" :key="review.id" class="review-card">
+                    <div class="review-card-top">
+                        <img :src="review.avatar" :alt="review.name">
+                        <div>
+                            <h3>{{ review.name }}</h3>
+                            <p>{{ review.role }}</p>
                         </div>
                     </div>
-                </SwiperSlide>
-                <template #container-end>
-                    <button class="nav-btn nav-prev int-prev" aria-label="Назад">
-                        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M15 18l-6-6 6-6" />
-                        </svg>
-                    </button>
-                    <button class="nav-btn nav-next int-next" aria-label="Вперёд">
-                        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M9 6l6 6-6 6" />
-                        </svg>
-                    </button>
-                </template>
-            </Swiper>
-        </ClientOnly>
-    </div>
+
+                    <div class="review-meta">
+                        <span>{{ review.object }}</span>
+                        <span>{{ review.location }}</span>
+                    </div>
+
+                    <div class="review-stars" aria-label="Оценка 5 из 5">★★★★★</div>
+                    <p class="review-text">{{ review.text }}</p>
+                </article>
+            </div>
+        </div>
+    </section>
 </template>
+
 <style scoped>
-/* Кнопки навигации для Swiper */
-.nav-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 10;
-    width: 44px;
-    height: 44px;
+.reviews-section {
+    overflow: hidden;
+    padding: 72px 0;
+    background: #FAF9F6;
+}
+
+.reviews-heading {
     display: grid;
-    place-items: center;
-    border-radius: 9999px;
-    background: rgba(255, 255, 255, 0.85);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    backdrop-filter: blur(6px);
+    justify-items: center;
+    gap: 10px;
+    margin-bottom: 34px;
+    text-align: center;
+}
+
+.reviews-avatars {
+    display: flex;
+    margin-bottom: 4px;
+}
+
+.reviews-avatars img {
+    width: 58px;
+    height: 58px;
+    border: 3px solid #FAF9F6;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 10px 24px rgba(43, 41, 37, 0.12);
+}
+
+.reviews-avatars img + img {
+    margin-left: -16px;
+}
+
+.reviews-kicker {
+    color: #0F5C43;
+    font-family: 'Montserrat-Bold', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.reviews-heading h2 {
+    max-width: 760px;
     color: #2B2925;
-    transition: all 0.2s ease;
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-    cursor: pointer;
+    font-size: clamp(28px, 4vw, 44px);
+    line-height: 1.12;
 }
 
-.nav-btn:hover {
-    background: white;
-    transform: translateY(-50%) scale(1.04);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16);
+.reviews-scroll {
+    position: relative;
+    width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-padding-inline: max(24px, calc((100vw - 1280px) / 2));
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
 }
 
-.nav-prev {
-    left: 12px;
+.reviews-scroll::-webkit-scrollbar {
+    height: 8px;
 }
 
-.nav-next {
-    right: 12px;
+.reviews-scroll::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+    background: rgba(15, 92, 67, 0.28);
 }
 
-/* disabled */
-.swiper-button-disabled.nav-btn {
-    opacity: 0.4;
-    cursor: default;
-    transform: translateY(-50%) scale(1);
-    box-shadow: none;
+.reviews-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.reviews-track {
+    display: flex;
+    width: max-content;
+    gap: 18px;
+    padding: 4px max(24px, calc((100vw - 1280px) / 2)) 16px;
+}
+
+.review-card {
+    display: grid;
+    align-content: start;
+    width: 390px;
+    min-height: 330px;
+    flex: 0 0 auto;
+    gap: 16px;
+    border: 1px solid #E3E1DA;
+    border-radius: 8px;
+    background: #FFFFFF;
+    padding: 22px;
+    box-shadow: 0 14px 36px rgba(43, 41, 37, 0.07);
+}
+
+.review-card-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.review-card-top img {
+    width: 54px;
+    height: 54px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.review-card h3 {
+    color: #2B2925;
+    font-size: 18px;
+    line-height: 1.2;
+}
+
+.review-card-top p,
+.review-meta,
+.review-text {
+    color: #6B6864;
+}
+
+.review-card-top p {
+    margin-top: 3px;
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.review-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.review-meta span {
+    border-radius: 999px;
+    background: #E6F0EC;
+    padding: 7px 10px;
+    color: #0F5C43;
+}
+
+.review-stars {
+    color: #0F5C43;
+    font-size: 17px;
+    letter-spacing: 2px;
+}
+
+.review-text {
+    font-size: 15px;
+    line-height: 1.65;
 }
 
 @media (max-width: 640px) {
-    .nav-btn {
-        width: 38px;
-        height: 38px;
+    .reviews-section {
+        padding: 52px 0;
     }
 
-    .nav-prev {
-        left: 6px;
+    .reviews-heading {
+        padding: 0 16px;
     }
 
-    .nav-next {
-        right: 6px;
+    .review-card {
+        width: 310px;
+        min-height: 380px;
+        padding: 18px;
+    }
+
+    .reviews-scroll {
+        scroll-padding-inline: 16px;
+    }
+
+    .reviews-track {
+        padding-inline: 16px;
     }
 }
 </style>

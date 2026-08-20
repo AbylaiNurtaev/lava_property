@@ -26,9 +26,8 @@ export const useNewsStore = defineStore('newsStore', {
   actions: {
     async loadNewsFromJSON(path = '/api/news') {
       try {
-        const res = await fetch(path)
-        if (!res.ok) throw new Error('Ошибка загрузки JSON: ' + res.status)
-        const data = await res.json()
+        const requestFetch = useRequestFetch()
+        const data = await requestFetch(path)
 
         if (!data || !Array.isArray(data.categories)) {
           console.error('Ожидался объект вида { categories: [] }:', data)

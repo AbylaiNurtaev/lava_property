@@ -6452,9 +6452,8 @@ units: [
   actions: {
     async loadPropertiesFromJSON(path = '/api/properties') {
       try {
-        const res = await fetch(path)
-        if (!res.ok) throw new Error('Ошибка загрузки JSON')
-        const data = await res.json()
+        const requestFetch = useRequestFetch()
+        const data = await requestFetch(path)
         if (Array.isArray(data) && data.length) {
           this.properties = data
           this.propertiesLoaded = true

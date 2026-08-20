@@ -35,49 +35,29 @@ useHead({
 </script>
 
 <template>
-    <div class="home-hero flex items-end">
+    <div class="home-hero flex items-center">
+        <video class="home-hero-video" src="/video/home-hero.webm" autoplay muted loop playsinline preload="metadata"
+            poster="/img/bg-phuket.webp" aria-hidden="true"></video>
         <div class="container w-full z-10">
-            <div class="hero flex flex-col lg:flex-row justify-between xl:items-end w-full mb-10 lg:mb-12"
-                data-aos="fade-up" data-aos-delay="200" data-aos-duration="1200" data-aos-easing="ease-out-cubic"
-                data-aos-once="true">
-                <div class="text-left text-white">
-                    <div class="flex flex-col md:flex-row gap-4 mb-8 lg:mb-10">
-                        <div class="point-block">
-                            <div class="flex flex-col">
-                                <div class="text-3xl lg:text-4xl bl0">25%</div>
-                                <p class="text-xs leading-[15px] text-white/80">Рост стоимости</p>
-                            </div>
-                        </div>
-                        <div class="point-block">
-                            <div class="flex flex-col">
-                                <div class="text-3xl lg:text-4xl bl0">8-12%</div>
-                                <p class="text-xs leading-[15px] text-white/80">Доходность</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <h1 class="text-xl lg:text-4xl light">
-                        Недвижимость<br>
-                        <span class="text-4xl lg:text-6xl uppercase bl">в Таиланде</span>
+            <div class="hero">
+                <div class="hero-content text-white">
+                    <h1>
+                        <span>Недвижимость в Таиланде</span>
+                        <span>для жизни и инвестиций</span>
                     </h1>
-                    <p class="mt-4 max-w-[620px] text-sm lg:text-lg leading-relaxed text-white/85">
-                        Подбираем виллы и апартаменты для жизни, отдыха и инвестиций без разделения на один город.
+                    <p>
+                        Подбираем виллы, апартаменты и инвестиционные проекты по всему Таиланду: с понятной логикой,
+                        реальными цифрами и сопровождением до сделки.
                     </p>
-                </div>
 
-                <div class="buttons-right flex flex-wrap lg:gap-4 mt-6 lg:mt-0">
-                    <NuxtLink to="/best">
-                        <ButtonsTheGreen text="Лучшие предложения" text-color="#FFFFFF" />
-                    </NuxtLink>
-                    <NuxtLink to="/villas">
-                        <ButtonsTheGreen text="Виллы" color="#FFFFFF" text-color="#2B2925" />
-                    </NuxtLink>
-                    <NuxtLink to="/condo">
-                        <ButtonsTheGreen text="Апартаменты" color="#FFFFFF" text-color="#2B2925" />
-                    </NuxtLink>
-                    <NuxtLink to="/news">
-                        <ButtonsTheGreen text="Гид" color="#FFFFFF" text-color="#2B2925" />
-                    </NuxtLink>
+                    <div class="hero-actions">
+                        <NuxtLink to="/phuket" class="hero-primary-button">
+                            Пхукет
+                        </NuxtLink>
+                        <NuxtLink to="/pattaya" class="hero-secondary-button">
+                            Паттайя
+                        </NuxtLink>
+                    </div>
                 </div>
             </div>
         </div>
@@ -93,8 +73,9 @@ useHead({
 .home-hero {
     position: relative;
     overflow: hidden;
-    min-height: 92svh;
-    padding: 118px 24px 46px;
+    min-height: 100svh;
+    padding: 132px 0 72px;
+    background: #0B4433;
 }
 
 .home-hero::before {
@@ -105,10 +86,18 @@ useHead({
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    transform: scale(1);
-    animation: heroZoom 18s ease-in-out infinite alternate;
     z-index: 0;
     pointer-events: none;
+}
+
+.home-hero-video {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
 }
 
 .home-hero::after {
@@ -116,54 +105,145 @@ useHead({
     position: absolute;
     inset: 0;
     background:
-        linear-gradient(90deg, rgba(5, 12, 14, 0.78) 0%, rgba(5, 12, 14, 0.48) 42%, rgba(5, 12, 14, 0.12) 100%),
-        linear-gradient(to top, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.08));
-    z-index: 1;
+        radial-gradient(circle at 50% 46%, rgba(15, 92, 67, 0.38), transparent 40%),
+        linear-gradient(90deg, rgba(5, 12, 14, 0.74) 0%, rgba(5, 12, 14, 0.54) 50%, rgba(5, 12, 14, 0.74) 100%),
+        linear-gradient(to top, rgba(0, 0, 0, 0.34), rgba(0, 0, 0, 0.08));
+    z-index: 2;
     pointer-events: none;
 }
 
-.home-hero>* {
+.home-hero>.container {
     position: relative;
-    z-index: 2;
+    z-index: 3;
 }
 
-.point-block {
+.hero {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.hero-content {
     position: relative;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    min-width: 166px;
-    min-height: 82px;
-    padding: 18px 22px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.24);
-    background: rgba(255, 255, 255, 0.12);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
-    backdrop-filter: blur(14px);
+    width: min(1240px, 100%);
+    min-height: 520px;
+    justify-content: center;
+    text-align: center;
 }
 
-@keyframes heroZoom {
-    from {
-        transform: scale(1);
-    }
+.hero h1 {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 6px;
+    max-width: 1120px;
+    font-family: 'Montserrat-Bold', sans-serif;
+    font-size: clamp(46px, 4.85vw, 68px);
+    line-height: 0.98;
+    letter-spacing: 0;
+    color: #FFFFFF;
+}
 
-    to {
-        transform: scale(1.08);
-    }
+.hero h1 span {
+    display: block;
+    white-space: nowrap;
+}
+
+.hero p {
+    position: relative;
+    z-index: 1;
+    max-width: 680px;
+    margin-top: 22px;
+    color: rgba(255, 255, 255, 0.86);
+    font-size: 18px;
+    line-height: 1.6;
+}
+
+.hero-actions {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 34px;
+}
+
+.hero-primary-button,
+.hero-secondary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 56px;
+    padding: 0 28px;
+    border-radius: 999px;
+    font-family: 'Montserrat-Bold', sans-serif;
+    font-size: 15px;
+    line-height: 1;
+    transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.hero-primary-button {
+    border: 1px solid #0F5C43;
+    background: #0F5C43;
+    color: #FFFFFF;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
+}
+
+.hero-secondary-button {
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.12);
+    color: #FFFFFF;
+    backdrop-filter: blur(16px);
+}
+
+.hero-primary-button:hover,
+.hero-secondary-button:hover {
+    transform: translateY(-2px);
+}
+
+.hero-primary-button:hover {
+    background: #0B4433;
+    border-color: #0B4433;
+}
+
+.hero-secondary-button:hover {
+    background: #FFFFFF;
+    color: #0F5C43;
+    border-color: #FFFFFF;
 }
 
 @media (max-width: 640px) {
     .home-hero {
-        min-height: 78vh;
-        padding: 106px 18px 42px;
+        min-height: 100svh;
+        padding: 112px 0 48px;
     }
 
-    .home-hero::before {
-        background-position: 58% center;
+    .hero h1 {
+        font-size: 36px;
+        line-height: 1;
     }
 
-    .point-block {
+    .hero h1 span {
+        white-space: normal;
+    }
+
+    .hero p {
+        font-size: 15px;
+        line-height: 1.55;
+    }
+
+    .hero-actions {
+        grid-template-columns: 1fr;
         width: 100%;
-        max-width: 260px;
+    }
+
+    .hero-primary-button,
+    .hero-secondary-button {
+        width: 100%;
     }
 }
 </style>

@@ -134,6 +134,26 @@ h5 {
 .accent-text {
     color: var(--point-color);
 }
+
+.lava-dark-card,
+.lava-dark-card :is(p, span, strong, div, h1, h2, h3, h4, h5, li) {
+    color: var(--color-white) !important;
+}
+
+.lava-dark-card svg [fill="#2B2925"],
+.lava-dark-card svg [fill="#0F5C43"] {
+    fill: var(--color-white);
+}
+
+.lava-dark-card svg [fill="white"],
+.lava-dark-card svg [fill="#FFFFFF"] {
+    fill: rgba(255, 255, 255, 0.16);
+}
+
+.lava-dark-card svg [stroke="#2B2925"],
+.lava-dark-card svg [stroke="#0F5C43"] {
+    stroke: var(--color-white);
+}
 img {
     pointer-events: none;
 }

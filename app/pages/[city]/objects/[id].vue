@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
-import { useRoute, useRuntimeConfig } from 'nuxt/app'
+import { ref, computed } from 'vue'
+import { useRoute } from 'nuxt/app'
 import { usePropertyStore } from '~/stores/useProperties'
 
 import { Swiper, SwiperSlide } from 'swiper/vue'
@@ -17,7 +17,6 @@ import { vMaska } from 'maska/vue'
 // СТОР / РОУТ
 // ----------------------
 const route = useRoute()
-const config = useRuntimeConfig()
 const propertyStore = usePropertyStore()
 
 // Текущий объект по id из маршрута
@@ -71,80 +70,15 @@ const coords = computed<[number, number]>(() =>
 
 const amenities = computed(() => currentProperty.value?.amenities ?? [])
 
-const googleMapEl = ref<HTMLElement | null>(null)
-const mapError = ref('')
-let googleMap: google.maps.Map | null = null
-let googleMarker: google.maps.Marker | null = null
-
 const googlePosition = computed(() => {
     const [lng, lat] = coords.value
     return { lat, lng }
 })
 
-const objectMarkerIcon = () => ({
-    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-        <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 42 42">
-            <circle cx="21" cy="21" r="19" fill="#0F5C43" stroke="#ffffff" stroke-width="4"/>
-            <path d="M11 21.2 21 12l10 9.2v10.3a1.5 1.5 0 0 1-1.5 1.5h-5.8v-7.4h-5.4V33h-5.8a1.5 1.5 0 0 1-1.5-1.5V21.2Z" fill="#FFFFFF"/>
-        </svg>
-    `)}`,
-    scaledSize: new google.maps.Size(42, 42),
-    anchor: new google.maps.Point(21, 42),
-})
-
-const renderGoogleMap = (Google: typeof google) => {
-    if (!googleMapEl.value) return
-
-    const position = googlePosition.value
-    googleMap = new Google.maps.Map(googleMapEl.value, {
-        center: position,
-        zoom: 14,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: false,
-        clickableIcons: false,
-        styles: [
-            { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
-        ],
-    })
-
-    googleMarker = new Google.maps.Marker({
-        position,
-        map: googleMap,
-        title: currentProperty.value?.name || 'Lava Property',
-        icon: objectMarkerIcon(),
-    })
-}
-
-onMounted(async () => {
-    await nextTick()
-
-    const apiKey = String(config.public.googleMapsApiKey || '')
-    if (!apiKey) {
-        mapError.value = 'Добавьте NUXT_PUBLIC_GOOGLE_MAPS_API_KEY, чтобы включить Google Maps.'
-        return
-    }
-
-    try {
-        const { setOptions, importLibrary } = await import('@googlemaps/js-api-loader')
-        setOptions({
-            key: apiKey,
-            v: 'weekly',
-            language: 'ru',
-        })
-        await importLibrary('maps')
-        await importLibrary('marker')
-        renderGoogleMap(window.google)
-    } catch (error) {
-        mapError.value = 'Google Maps не загрузилась. Проверьте API key и доступ к Maps JavaScript API.'
-        console.error(error)
-    }
-})
-
-watch(googlePosition, (position) => {
-    if (!googleMap || !googleMarker) return
-    googleMap.setCenter(position)
-    googleMarker.setPosition(position)
+const googleMapEmbedUrl = computed(() => {
+    const { lat, lng } = googlePosition.value
+    const query = encodeURIComponent(`${lat},${lng}`)
+    return `https://maps.google.com/maps?q=${query}&z=14&hl=ru&output=embed`
 })
 
 // ----------------------
@@ -173,9 +107,11 @@ function translateSpecKey(key: string) {
 
 // Генплан
 const genplanList = computed<string[]>(() => {
-    const v = currentProperty.value?.genImg
-    if (!v) return []
-    return Array.isArray(v) ? v.filter(Boolean) : [v]
+    const main = currentProperty.value?.genImg
+    return uniqueImages([
+        ...(Array.isArray(main) ? main : [main]),
+        ...(currentProperty.value?.genplanImages || []),
+    ])
 })
 
 const genDesc = computed(() => currentProperty.value?.genDesc || '')
@@ -198,6 +134,50 @@ const propertyGallery = computed(() =>
 )
 
 const units = computed(() => currentProperty.value?.units ?? [])
+
+const normalizeNumber = (value: any) => {
+    const number = Number(String(value ?? '').replace(/[^\d.]/g, ''))
+    return Number.isFinite(number) ? number : 0
+}
+
+const firstNumber = (value: any) => {
+    const match = String(value ?? '').match(/\d+(?:[.,]\d+)?/)
+    return match ? Number(match[0].replace(',', '.')) : 0
+}
+
+const propertyArea = (property: any) => firstNumber(property?.specs?.areaTotal)
+const propertyBedrooms = (property: any) => firstNumber(property?.specs?.bedrooms)
+const propertyPrice = (property: any) => normalizeNumber(property?.priceDollars)
+const propertyDistrict = (property: any) => String(property?.location || '').split(',')[0]?.trim().toLowerCase()
+
+const propertyCardImage = (property: any) =>
+    property?.firstImg || property?.bgImg || property?.bigImg || property?.galleryExterior?.[0] || '/img/fallback.webp'
+
+const relatedProperties = computed(() => {
+    const current = currentProperty.value
+    if (!current) return []
+
+    const currentPrice = propertyPrice(current)
+    const currentArea = propertyArea(current)
+    const currentBedrooms = propertyBedrooms(current)
+    const currentDistrict = propertyDistrict(current)
+
+    return propertyStore.properties
+        .filter((property: any) => String(property.id) !== String(current.id))
+        .map((property: any) => {
+            let score = 0
+            if (property.city === current.city) score += 40
+            if (property?.specs?.propertyType === current?.specs?.propertyType) score += 22
+            if (currentDistrict && propertyDistrict(property) === currentDistrict) score += 18
+            if (currentBedrooms && propertyBedrooms(property) === currentBedrooms) score += 12
+            if (currentArea && propertyArea(property)) score += Math.max(0, 10 - Math.abs(propertyArea(property) - currentArea) / 10)
+            if (currentPrice && propertyPrice(property)) score += Math.max(0, 12 - Math.abs(propertyPrice(property) - currentPrice) / Math.max(currentPrice, 1) * 40)
+            return { property, score }
+        })
+        .sort((a: any, b: any) => b.score - a.score)
+        .slice(0, 3)
+        .map((item: any) => item.property)
+})
 
 const summarySpecs = computed(() => {
     const specs = currentProperty.value?.specs || {}
@@ -419,15 +399,9 @@ const handleSubmit2 = async () => {
                         <li v-for="(amenity, i) in amenities.slice(0, 8)" :key="i">{{ amenity }}</li>
                     </ul>
                 </div>
-
-                <article class="project-description">
-                    <span class="section-kicker">Описание</span>
-                    <h2>О проекте</h2>
-                    <div v-html="currentProperty.description || ''"></div>
-                </article>
             </div>
 
-            <aside class="object-contact-card">
+            <aside v-if="currentProperty" class="object-contact-card" aria-label="Заказать звонок">
                 <div class="manager-row">
                     <div class="manager-avatars">
                         <img src="/img/people/anna.png" alt="Менеджер" />
@@ -459,6 +433,12 @@ const handleSubmit2 = async () => {
                     <IconsTheWhatsApp />
                 </div>
             </aside>
+
+            <article class="project-description">
+                <span class="section-kicker">Описание</span>
+                <h2>О проекте</h2>
+                <div v-html="currentProperty.description || ''"></div>
+            </article>
         </section>
 
         <section v-else class="object-empty container">
@@ -518,12 +498,32 @@ const handleSubmit2 = async () => {
             </div>
         </div>
 
-        <div class="w-full lg:w-1/2 h-full">
-            <!-- ОБЁРТКА С КЛИКОМ -->
-            <div class="w-full h-full cursor-zoom-in" @click.stop="openLightbox(genplanList[0], genplanList, 0)">
-                <NuxtImg :src="genplanList[0]" :alt="`Генплан — ${currentProperty?.name}`"
-                    class="w-full h-full object-contain rounded-[30px]" />
-            </div>
+        <div class="w-full lg:w-1/2 h-[360px] lg:h-[460px]">
+            <ClientOnly>
+                <Swiper :modules="swiperModules" :loop="genplanList.length > 1" :keyboard="{ enabled: true }"
+                    :pagination="{ clickable: true }" :navigation="{ nextEl: '.gen-next', prevEl: '.gen-prev' }"
+                    class="genplan-slider">
+                    <SwiperSlide v-for="(src, i) in genplanList" :key="src">
+                        <button type="button" class="genplan-slide" @click.stop="openLightbox(src, genplanList, i)">
+                            <NuxtImg :src="src" :alt="`Генплан — ${currentProperty?.name}, фото ${i + 1}`"
+                                loading="lazy" />
+                        </button>
+                    </SwiperSlide>
+
+                    <template #container-end>
+                        <button class="nav-btn nav-prev gen-prev" aria-label="Назад">
+                            <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M15 18l-6-6 6-6" />
+                            </svg>
+                        </button>
+                        <button class="nav-btn nav-next gen-next" aria-label="Вперёд">
+                            <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 6l6 6-6 6" />
+                            </svg>
+                        </button>
+                    </template>
+                </Swiper>
+            </ClientOnly>
         </div>
     </div>
     <!-- units -->
@@ -610,10 +610,9 @@ const handleSubmit2 = async () => {
     <!-- MAP -->
     <div class="container mx-auto w-full flex flex-col-reverse lg:flex-row gap-10 my-20 items-stretch">
         <div class="relative w-full lg:w-1/2 h-[400px] lg:h-auto">
-            <div ref="googleMapEl" class="google-object-map"></div>
-            <div v-if="mapError" class="google-object-map-error">
-                {{ mapError }}
-            </div>
+            <iframe class="google-object-map" :src="googleMapEmbedUrl" loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade" allowfullscreen
+                :title="`Google Map — ${currentProperty?.name || 'Lava Property'}`"></iframe>
         </div>
 
         <div class="w-full lg:w-1/2 lg:h-auto bg-white/60 backdrop-blur-sm rounded-2xl p-4">
@@ -664,7 +663,35 @@ const handleSubmit2 = async () => {
             :style="{ backgroundImage: `url(${currentProperty?.firstImg})` }"></div>
     </div>
 
+    <section v-if="relatedProperties.length" class="related-section container">
+        <div class="related-head">
+            <span class="section-kicker">Похожие объекты</span>
+            <h2>Максимально схожие варианты</h2>
+        </div>
+
+        <div class="related-grid">
+            <NuxtLink v-for="property in relatedProperties" :key="property.id" class="related-card"
+                :to="`/objects/${property.id}`">
+                <span class="related-image">
+                    <img :src="propertyCardImage(property)" :alt="property.name" loading="lazy"
+                        referrerpolicy="no-referrer" />
+                </span>
+                <span class="related-body">
+                    <strong>{{ property.name }}</strong>
+                    <small>{{ property.location }}</small>
+                    <span class="related-price">{{ property.priceDollars || property.priceTHB }}</span>
+                    <span class="related-specs">
+                        {{ property.specs?.propertyType }}
+                        <template v-if="property.specs?.bedrooms"> · {{ property.specs.bedrooms }} сп.</template>
+                        <template v-if="property.specs?.areaTotal"> · {{ property.specs.areaTotal }}</template>
+                    </span>
+                </span>
+            </NuxtLink>
+        </div>
+    </section>
+
     <AccordionsTheWeAnswear />
+
 
     <!-- LIGHTBOX -->
     <!-- lightbox start -->
@@ -836,7 +863,6 @@ const handleSubmit2 = async () => {
 .object-price-card {
     display: grid;
     gap: 4px;
-    max-width: 480px;
     border-radius: 8px;
     background: #E6F0EC;
     padding: 16px;
@@ -900,14 +926,18 @@ const handleSubmit2 = async () => {
 }
 
 .object-contact-card {
-    display: grid;
     align-self: start;
+    display: grid;
     gap: 14px;
     border: 1px solid #E3E1DA;
     border-radius: 8px;
     background: #FFFFFF;
     padding: 16px;
-    box-shadow: 0 12px 30px rgba(43, 41, 37, 0.05);
+    box-shadow: 0 18px 50px rgba(43, 41, 37, 0.18);
+}
+
+.project-description {
+    grid-column: 1 / -1;
 }
 
 .manager-row {
@@ -1049,6 +1079,7 @@ const handleSubmit2 = async () => {
 }
 
 .google-object-map {
+    display: block;
     width: 100%;
     height: 100%;
     min-height: 400px;
@@ -1058,16 +1089,116 @@ const handleSubmit2 = async () => {
     background: #E6F0EC;
 }
 
-.google-object-map-error {
-    position: absolute;
-    inset: 16px;
+.genplan-slider {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border: 1px solid #E3E1DA;
+    border-radius: 8px;
+    background: #FFFFFF;
+}
+
+.genplan-slide {
     display: grid;
+    width: 100%;
+    height: 100%;
+    cursor: zoom-in;
     place-items: center;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.92);
+    padding: 14px;
+}
+
+.genplan-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.related-section {
+    margin-top: 36px;
+    margin-bottom: 80px;
+}
+
+.related-head {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.related-head h2 {
+    color: #2B2925;
+    font-size: clamp(26px, 2.8vw, 38px);
+    line-height: 1.12;
+}
+
+.related-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.related-card {
+    overflow: hidden;
+    border: 1px solid #E3E1DA;
+    border-radius: 8px;
+    background: #FFFFFF;
+    color: #2B2925;
+    box-shadow: 0 14px 34px rgba(43, 41, 37, 0.06);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.related-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 44px rgba(43, 41, 37, 0.12);
+}
+
+.related-image {
+    display: block;
+    aspect-ratio: 1.45;
+    overflow: hidden;
+    background: #E6F0EC;
+}
+
+.related-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.22s ease;
+}
+
+.related-card:hover .related-image img {
+    transform: scale(1.04);
+}
+
+.related-body {
+    display: grid;
+    gap: 7px;
+    padding: 14px;
+}
+
+.related-body strong {
+    overflow: hidden;
+    color: #2B2925;
+    font-family: 'Montserrat-Bold', sans-serif;
+    font-size: 17px;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.related-body small,
+.related-specs {
+    overflow: hidden;
     color: #6B6864;
-    padding: 18px;
-    text-align: center;
+    font-size: 13px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.related-price {
+    color: #0F5C43;
+    font-family: 'Montserrat-Bold', sans-serif;
+    font-size: 18px;
 }
 
 .object-empty {
@@ -1252,12 +1383,25 @@ const handleSubmit2 = async () => {
         padding: 16px;
     }
 
+    .object-contact-card {
+        padding: 14px;
+    }
+
+    .manager-row {
+        grid-template-columns: auto 1fr;
+        align-items: center;
+    }
+
     .object-facts {
         grid-template-columns: 1fr;
     }
 
     .object-photo-strip {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .related-grid {
+        grid-template-columns: 1fr;
     }
 
     .spec-list li {

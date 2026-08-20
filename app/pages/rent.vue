@@ -114,7 +114,7 @@ const current = ref(false)
             data-aos-easing="ease-out-cubic">
 
             <div style="background-color:#0F5C43"
-                class="absolute lg:-bottom-20 lg:right-10 hidden lg:flex flex-col justify-start  w-[250px] items-start  p-4 lg:p-6 rounded-[20px]"
+                class="lava-dark-card absolute lg:-bottom-20 lg:right-10 hidden lg:flex flex-col justify-start  w-[250px] items-start  p-4 lg:p-6 rounded-[20px]"
                 data-aos="fade-left" data-aos-delay="200" data-aos-once="true" data-aos-duration="1200"
                 data-aos-easing="ease-out-cubic">
                 <div class="flex gap-4 items-center mb-2">
@@ -183,7 +183,7 @@ const current = ref(false)
             </div>
             <!--  -->
             <div style="background-color:#0F5C43"
-                class="absolute lg:-bottom-20 lg:right-10 hidden lg:flex flex-col justify-start  w-[250px] items-start  p-4 lg:p-6 rounded-[20px]"
+                class="lava-dark-card absolute lg:-bottom-20 lg:right-10 hidden lg:flex flex-col justify-start  w-[250px] items-start  p-4 lg:p-6 rounded-[20px]"
                 data-aos="fade-left" data-aos-delay="200" data-aos-once="true" data-aos-duration="1200"
                 data-aos-easing="ease-out-cubic">
                 <div class="flex gap-4 items-center mb-2">

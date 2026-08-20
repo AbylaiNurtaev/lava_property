@@ -4,8 +4,9 @@ const props = defineProps<{
     pageTitle: string
 }>()
 
-const rating = ref(4)
+const rating = ref(0)
 const hoverRating = ref(0)
+const starsTouched = ref(false)
 const comment = ref('')
 const sent = ref(false)
 const pending = ref(false)
@@ -19,7 +20,7 @@ const feedbackCookie = useCookie<string | null>(feedbackStorageKey, {
 })
 
 const visibleRating = computed(() => hoverRating.value || rating.value)
-const isLowRating = computed(() => rating.value <= 3)
+const isLowRating = computed(() => rating.value > 0 && rating.value <= 3)
 
 const hasSubmittedFeedback = () => {
     if (feedbackCookie.value === 'sent') return true
@@ -41,11 +42,17 @@ const rememberSubmittedFeedback = () => {
 
 const setRating = (value: number) => {
     rating.value = value
+    starsTouched.value = true
     sent.value = false
     errorMessage.value = ''
 }
 
 const submitRating = async () => {
+    if (!rating.value) {
+        errorMessage.value = 'Выберите оценку'
+        return
+    }
+
     pending.value = true
     errorMessage.value = ''
 
@@ -92,7 +99,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <section v-if="showPrompt" class="page-rating" aria-live="polite">
+    <section v-if="showPrompt" class="page-rating" :class="{ 'stars-visible': starsTouched || hoverRating }"
+        aria-live="polite">
         <button type="button" class="rating-close" aria-label="Закрыть оценку" @click="closePrompt">
             ×
         </button>
@@ -105,7 +113,7 @@ onBeforeUnmount(() => {
         <div class="rating-control" aria-label="Оценка страницы">
             <button v-for="star in 5" :key="star" type="button" :class="{ active: star <= visibleRating }"
                 :aria-label="`${star} из 5`" @click="setRating(star)" @mouseenter="hoverRating = star"
-                @mouseleave="hoverRating = 0">
+                @focus="hoverRating = star" @mouseleave="hoverRating = 0" @blur="hoverRating = 0">
                 ★
             </button>
         </div>
@@ -116,7 +124,7 @@ onBeforeUnmount(() => {
                 <input v-model="comment" type="text" placeholder="Коротко напишите, что добавить">
             </label>
 
-            <button type="submit" :disabled="pending">
+            <button type="submit" :disabled="pending || !rating">
                 {{ pending ? 'Отправляем...' : 'Отправить' }}
             </button>
         </form>
@@ -130,7 +138,7 @@ onBeforeUnmount(() => {
 .page-rating {
     position: fixed;
     right: 22px;
-    bottom: 22px;
+    bottom: 8px;
     z-index: 80;
     display: grid;
     width: min(360px, calc(100vw - 28px));
@@ -138,9 +146,18 @@ onBeforeUnmount(() => {
     border: 1px solid #E3E1DA;
     border-radius: 8px;
     background: #fff;
+    opacity: 0.7;
     padding: 18px;
     box-shadow: 0 18px 46px rgba(43, 41, 37, 0.14);
     animation: rating-slide-in 0.24s ease both;
+    transition: opacity 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.page-rating:hover,
+.page-rating:focus-within {
+    opacity: 1;
+    transform: translateY(-2px);
+    box-shadow: 0 22px 54px rgba(43, 41, 37, 0.18);
 }
 
 .rating-head {
@@ -186,6 +203,16 @@ onBeforeUnmount(() => {
 .rating-control {
     display: flex;
     gap: 4px;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.page-rating:hover .rating-control,
+.page-rating:focus-within .rating-control,
+.page-rating.stars-visible .rating-control {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .rating-control button {
@@ -235,8 +262,18 @@ onBeforeUnmount(() => {
     font-family: 'Montserrat-Bold', sans-serif;
 }
 
+.rating-form button:disabled {
+    cursor: not-allowed;
+    background: #E3E1DA;
+    color: #9A9A9A;
+}
+
 .rating-form button:hover {
     background: #0B4433;
+}
+
+.rating-form button:disabled:hover {
+    background: #E3E1DA;
 }
 
 .rating-ok,
@@ -255,7 +292,7 @@ onBeforeUnmount(() => {
 @media (max-width: 640px) {
     .page-rating {
         right: 14px;
-        bottom: 14px;
+        bottom: 8px;
         padding: 16px;
     }
 

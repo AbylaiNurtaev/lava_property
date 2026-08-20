@@ -1,115 +1,271 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
 import { useCityStore } from '~/stores/useCityStore'
 
-const route = useRoute()
 const cityStore = useCityStore()
+
 const catalogLink = computed(() => {
     if (!cityStore.city) return '/best'
     return `/${cityStore.city}/catalog`
 })
-const effectiveCity = computed<'phuket' | 'pattaya' | ''>(() => {
-    if (cityStore.city) return cityStore.city
-    const p = route.path || ''
-    if (p.startsWith('/phuket')) return 'phuket'
-    if (p.startsWith('/pattaya')) return 'pattaya'
-    return ''
-})
-
 </script>
+
 <template>
-    <div
-        class="container mx-auto mt-10 lg:my-36 flex flex-col lg:flex-row items-start justify-between gap-6 lg:gap-10 items-stretch">
-        <div class=" w-full lg:w-1/2">
-            <h2 class="light text-2xl lg:text-4xl mb-10">
-                <span class="bl0"> Инвестируй </span><br></br>
+    <section class="invest-block container mx-auto">
+        <div class="invest-copy">
+            <h2 class="light">
+                <span class="bl0">Инвестируй</span><br>
                 в будущее с нами и нашими клиентами
             </h2>
 
-            <p class="my-2">Недвижимость Тайланда как инвестиционный актив (заголовок) — это не только курорт,
-                но и рынок с устойчивым спросом на аренду и ограниченным предложением земли.
-                Недвижимость здесь рассматривают как инструмент сохранения капитала, а также как основу для комфортной
-                жизни, регулярного дохода и долгосрочного роста стоимости.
+            <p>
+                Недвижимость Таиланда — это не только курорт, но и рынок с устойчивым спросом на аренду,
+                ограниченным предложением земли и понятными сценариями роста стоимости.
             </p>
-            <p class="my-2"> Мы работаем с объектами, где инвестиционная логика понятна заранее: есть спрос, ликвидность
-                и
-                реалистичный сценарий дохода.</p>
-            <div class="flex flex-col lg:flex-row gap-1 mt-10">
+            <p>
+                Мы подбираем объекты, где инвестиционная логика видна заранее: район, ликвидность, спрос,
+                график платежей и реалистичный сценарий дохода.
+            </p>
+
+            <div class="invest-actions">
                 <NuxtLink :href="catalogLink">
                     <ButtonsTheGreen text="Cмотреть каталог" text-color="white" />
                 </NuxtLink>
-                <a href="#contacts" class="">
-                    <ButtonsTheGreen text="Написать  специалисту" color="white" />
+                <a href="#contacts">
+                    <ButtonsTheGreen text="Написать специалисту" color="white" />
                 </a>
             </div>
         </div>
-        <div class="relative bg-[url(/img/manager.webp)] w-full lg:w-1/2 cursor-pointer bg-cover bg-center h-[450px]  rounded-[20px] flex flex-col justify-end p-6"
-            data-aos="fade-right" data-aos-delay="200" data-aos-duration="1200" data-aos-once="true"
-            data-aos-easing="ease-out-cubic">
-            <!--  -->
-            <div class="absolute lg:-top-20 flex flex-col justify-start  w-[250px] items-start bg-white  p-4 lg:p-6 rounded-[20px]"
-                data-aos="fade-right" data-aos-delay="200" data-aos-duration="1200" data-aos-easing="ease-out-cubic">
-                <div class="flex gap-4 items-center mb-2">
-                    <svg width="63" height="63" viewBox="0 0 63 63" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="0.736328" y="0.741699" width="62" height="62" rx="31" fill="#0F5C43" />
-                        <path
-                            d="M49.5042 27.0947V23.5411C49.5042 22.721 48.9575 22.1743 48.1374 22.1743H39.5267C39.1166 22.9944 38.1599 23.5411 37.2031 23.5411C36.2464 23.5411 35.2896 22.9944 34.8796 22.1743H15.3346C14.5145 22.1743 13.9678 22.721 13.9678 23.5411V27.0947C15.6079 28.0515 16.7013 29.8283 16.7013 31.7418C16.7013 33.6553 15.6079 35.5688 13.9678 36.3889V39.9425C13.9678 40.7626 14.5145 41.3093 15.3346 41.3093H34.8796C35.2896 40.4893 36.2464 39.9425 37.2031 39.9425C38.1599 39.9425 39.1166 40.4893 39.5267 41.3093H48.1374C48.9575 41.3093 49.5042 40.7626 49.5042 39.9425V36.3889C47.8641 35.4321 46.7706 33.6553 46.7706 31.7418C46.7706 29.8283 47.8641 27.9148 49.5042 27.0947Z"
-                            stroke="black" stroke-width="2" stroke-miterlimit="10" stroke-linecap="round"
-                            stroke-linejoin="round" />
-                        <path d="M37.2031 26.2747V30.375" stroke="black" stroke-width="2" stroke-miterlimit="10"
-                            stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M37.2031 37.209V33.1086" stroke="black" stroke-width="2" stroke-miterlimit="10"
-                            stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M23.5352 35.8421L29.0023 27.6414" stroke="black" stroke-width="2"
-                            stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M22.1685 26.2747V30.375" stroke="black" stroke-width="2" stroke-miterlimit="10"
-                            stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M30.3691 33.1086V37.209" stroke="black" stroke-width="2" stroke-miterlimit="10"
-                            stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    <p><span class="bl0 m-0 leading-0 block">Апарты</span>102 896$</p>
+
+        <div class="invest-photo" data-aos="fade-right" data-aos-delay="200" data-aos-duration="1200"
+            data-aos-once="true" data-aos-easing="ease-out-cubic">
+            <div class="invest-card invest-card--top" data-aos="fade-right" data-aos-delay="200"
+                data-aos-duration="1200" data-aos-easing="ease-out-cubic">
+                <div class="invest-card-head">
+                    <span class="invest-icon">
+                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 10.6L12 4l8 6.6" stroke="currentColor" stroke-width="1.9"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M6.5 9.5V20h11V9.5" stroke="currentColor" stroke-width="1.9"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M10 20v-5h4v5" stroke="currentColor" stroke-width="1.9"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </span>
+                    <p><span>Апарты</span>102 896$</p>
                 </div>
-                <p><span class="bl0 m-0 leading-0">Хороший объект </span>для инвестирования</p>
-                <!-- <ButtonsTheGreen text="Cмотреть" text-color="white" class="w-full ml-0" /> -->
+                <p><strong>Хороший объект</strong> для инвестирования</p>
                 <NuxtLink href="/objects/27">
                     <ButtonsTheGreen text="Cмотреть" text-color="white" class="w-full ml-0" />
                 </NuxtLink>
             </div>
-            <!--  -->
-            <div style="background-color:#0F5C43"
-                class="absolute lg:-bottom-20 lg:right-0 hidden lg:flex flex-col justify-start  w-[250px] items-start  p-4 lg:p-6 rounded-[20px]"
-                data-aos="fade-left" data-aos-delay="200" data-aos-once="true" data-aos-duration="1200"
-                data-aos-easing="ease-out-cubic">
-                <div class="flex gap-4 items-center mb-2">
-                    <svg width="63" height="63" viewBox="0 0 63 63" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="0.736328" y="0.741699" width="62" height="62" rx="31" fill="#ffffff" />
-                        <path
-                            d="M49.5042 27.0947V23.5411C49.5042 22.721 48.9575 22.1743 48.1374 22.1743H39.5267C39.1166 22.9944 38.1599 23.5411 37.2031 23.5411C36.2464 23.5411 35.2896 22.9944 34.8796 22.1743H15.3346C14.5145 22.1743 13.9678 22.721 13.9678 23.5411V27.0947C15.6079 28.0515 16.7013 29.8283 16.7013 31.7418C16.7013 33.6553 15.6079 35.5688 13.9678 36.3889V39.9425C13.9678 40.7626 14.5145 41.3093 15.3346 41.3093H34.8796C35.2896 40.4893 36.2464 39.9425 37.2031 39.9425C38.1599 39.9425 39.1166 40.4893 39.5267 41.3093H48.1374C48.9575 41.3093 49.5042 40.7626 49.5042 39.9425V36.3889C47.8641 35.4321 46.7706 33.6553 46.7706 31.7418C46.7706 29.8283 47.8641 27.9148 49.5042 27.0947Z"
-                            stroke="black" stroke-width="2" stroke-miterlimit="10" stroke-linecap="round"
-                            stroke-linejoin="round" />
-                        <path d="M37.2031 26.2747V30.375" stroke="black" stroke-width="2" stroke-miterlimit="10"
-                            stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M37.2031 37.209V33.1086" stroke="black" stroke-width="2" stroke-miterlimit="10"
-                            stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M23.5352 35.8421L29.0023 27.6414" stroke="black" stroke-width="2"
-                            stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M22.1685 26.2747V30.375" stroke="black" stroke-width="2" stroke-miterlimit="10"
-                            stroke-linecap="round" stroke-linejoin="round" />
-                        <path d="M30.3691 33.1086V37.209" stroke="black" stroke-width="2" stroke-miterlimit="10"
-                            stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    <p><span class="bl0 m-0 leading-0 block">Апарты</span>151 662$</p>
-                </div>
-                <p><span class="bl0 m-0 leading-0">Хороший объект </span>для инвестирования</p>
 
+            <div class="invest-card invest-card--bottom" data-aos="fade-left" data-aos-delay="200"
+                data-aos-once="true" data-aos-duration="1200" data-aos-easing="ease-out-cubic">
+                <div class="invest-card-head">
+                    <span class="invest-icon invest-icon--light">
+                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 10.6L12 4l8 6.6" stroke="currentColor" stroke-width="1.9"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M6.5 9.5V20h11V9.5" stroke="currentColor" stroke-width="1.9"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M10 20v-5h4v5" stroke="currentColor" stroke-width="1.9"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </span>
+                    <p><span>Вилла</span>151 662$</p>
+                </div>
+                <p><strong>Подходит</strong> для жизни и аренды</p>
                 <NuxtLink href="/objects/26">
                     <ButtonsTheGreen text="Cмотреть" color="white" class="w-full ml-0" />
                 </NuxtLink>
             </div>
-            <!--  -->
         </div>
-
-    </div>
-
+    </section>
 </template>
+
+<style scoped>
+.invest-block {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 32px;
+    margin-top: 88px;
+    margin-bottom: 132px;
+}
+
+.invest-copy {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.invest-copy h2 {
+    max-width: 620px;
+    margin-bottom: 34px;
+    color: #2B2925;
+    font-size: clamp(30px, 4vw, 54px);
+    line-height: 1.08;
+}
+
+.invest-copy p {
+    max-width: 620px;
+    margin: 8px 0;
+    color: #6B6864;
+    font-size: 16px;
+    line-height: 1.65;
+}
+
+.invest-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 34px;
+}
+
+.invest-photo {
+    position: relative;
+    width: 50%;
+    min-height: 460px;
+    border-radius: 20px;
+    background-image: linear-gradient(to top, rgba(43, 41, 37, 0.18), rgba(43, 41, 37, 0.02)), url('/img/manager-villa.webp');
+    background-size: cover;
+    background-position: center;
+    cursor: pointer;
+}
+
+.invest-card {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 250px;
+    gap: 12px;
+    border-radius: 20px;
+    padding: 22px;
+    box-shadow: 0 18px 46px rgba(43, 41, 37, 0.16);
+}
+
+.invest-card--top {
+    top: -66px;
+    left: 0;
+    background: #FFFFFF;
+    color: #2B2925;
+}
+
+.invest-card--bottom {
+    right: 0;
+    bottom: -66px;
+    background: #0F5C43;
+    color: #FFFFFF;
+}
+
+.invest-card-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.invest-card-head p {
+    margin: 0;
+    color: inherit;
+    font-size: 16px;
+    line-height: 1.25;
+}
+
+.invest-card-head p span,
+.invest-card strong {
+    display: block;
+    font-family: 'Montserrat-Bold', sans-serif;
+}
+
+.invest-card>p {
+    margin: 0;
+    color: inherit;
+    font-size: 15px;
+    line-height: 1.35;
+}
+
+.invest-icon {
+    position: relative;
+    display: block;
+    width: 62px;
+    height: 62px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: #0F5C43;
+    color: #FFFFFF;
+}
+
+.invest-icon svg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: block;
+    width: 36px;
+    height: 36px;
+    transform: translate(-50%, -50%);
+}
+
+.invest-icon--light {
+    background: #FFFFFF;
+    color: #0F5C43;
+}
+
+@media (max-width: 1024px) {
+    .invest-block {
+        flex-direction: column;
+        margin-top: 64px;
+        margin-bottom: 72px;
+    }
+
+    .invest-copy,
+    .invest-photo {
+        width: 100%;
+    }
+
+    .invest-photo {
+        min-height: 430px;
+    }
+
+    .invest-card {
+        position: relative;
+        inset: auto;
+        margin: 18px;
+    }
+
+    .invest-card--bottom {
+        display: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .invest-block {
+        margin-top: 52px;
+        margin-bottom: 56px;
+    }
+
+    .invest-copy h2 {
+        margin-bottom: 24px;
+        font-size: 30px;
+    }
+
+    .invest-actions {
+        flex-direction: column;
+    }
+
+    .invest-photo {
+        min-height: 360px;
+        background-position: center top;
+    }
+
+    .invest-card {
+        width: calc(100% - 28px);
+        margin: 14px;
+        padding: 18px;
+    }
+}
+</style>

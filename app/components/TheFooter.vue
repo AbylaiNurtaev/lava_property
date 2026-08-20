@@ -157,7 +157,7 @@ const handleSubmit = async () => {
                 </div>
 
                 <div class="text-right flex justify-start flex-col text-left mt-10 lg:mt-0">
-                    <a href="tel:+66618133387" class="text-left accent-text text-3xl lg:text-5xl hover:opacity-70">
+                    <a href="tel:+66618133387" class="footer-phone text-left text-3xl lg:text-5xl hover:opacity-70">
                         +66 61 813 3387
                     </a>
                     <span class="block bl0 text-2xl text-white hover:opacity-70 text-left">{{ address }}</span>
@@ -301,5 +301,9 @@ h1 {
     user-select: none;
     pointer-events: none;
     opacity: 0.95;
+}
+
+.footer-phone {
+    color: #ffffff;
 }
 </style>

@@ -1,13 +1,22 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { usePropertyStore } from '~/stores/useProperties'
+import { vMaska } from 'maska/vue'
 
 const propertyStore = usePropertyStore()
 const config = useRuntimeConfig()
+const route = useRoute()
 
 const desktopMapEl = ref<HTMLElement | null>(null)
 const mobileMapEl = ref<HTMLElement | null>(null)
 const mapError = ref('')
+const selectionPhone = ref('')
+const selectionMessage = ref('')
+const selectionSuccess = ref(false)
+const selectionPopupHidden = ref(false)
+const selectionPopupReady = ref(false)
+const selectionStorageKey = 'lava_catalog_selection_requested'
+const selectionDismissKey = 'lava_catalog_selection_dismissed'
 
 const PHUKET_MAP_VIEW = {
     center: { lat: 7.92, lng: 98.36 },
@@ -29,6 +38,29 @@ const emptyFilters = () => ({
 const filterForm = ref(emptyFilters())
 const appliedFilters = ref(emptyFilters())
 const listingImageIndexes = ref<Record<string, number>>({})
+const openFilterSelect = ref('')
+
+const readInitialFilters = () => {
+    const filters = emptyFilters()
+    const queryCity = String(route.query.city || '')
+    const queryDistrict = String(route.query.district || '')
+    const queryPriceMax = String(route.query.priceMax || '')
+
+    if (queryCity === 'phuket' || queryCity === 'pattaya') {
+        filters.city = queryCity
+    }
+
+    if (queryDistrict) {
+        filters.district = queryDistrict
+    }
+
+    if (queryPriceMax && Number.isFinite(Number(queryPriceMax))) {
+        filters.priceMax = queryPriceMax
+    }
+
+    filterForm.value = filters
+    appliedFilters.value = { ...filters }
+}
 
 const properties = computed(() =>
     (propertyStore.getAllBestProperties || []).filter((item: any) => Array.isArray(item?.coordinates))
@@ -54,6 +86,45 @@ const roomOptions = [
     { label: '3 комнаты', value: '3' },
     { label: '4+', value: '4' },
 ]
+
+type FilterSelectKey = 'city' | 'type' | 'district' | 'complex' | 'rooms'
+
+const districtSelectOptions = computed(() => [
+    { label: 'Любой район', value: '' },
+    ...districtOptions.value.map((district) => ({ label: district, value: district })),
+])
+
+const complexSelectOptions = computed(() => [
+    { label: 'Любой ЖК', value: '' },
+    ...complexOptions.value.map((complex) => ({ label: complex, value: complex })),
+])
+
+const filterSelects = computed(() => [
+    { id: 'city', label: 'Город', options: cityOptions },
+    { id: 'type', label: 'Тип', options: typeOptions },
+    { id: 'district', label: 'Район', options: districtSelectOptions.value },
+    { id: 'complex', label: 'Жилкомплекс', options: complexSelectOptions.value },
+    { id: 'rooms', label: 'Комнаты', options: roomOptions },
+] as Array<{ id: FilterSelectKey; label: string; options: Array<{ label: string; value: string }> }>)
+
+const selectedFilterLabel = (select: { id: FilterSelectKey; options: Array<{ label: string; value: string }> }) =>
+    select.options.find((option) => option.value === filterForm.value[select.id])?.label || select.options[0]?.label || ''
+
+const toggleFilterSelect = (id: FilterSelectKey) => {
+    openFilterSelect.value = openFilterSelect.value === id ? '' : id
+}
+
+const selectFilterOption = (id: FilterSelectKey, value: string) => {
+    filterForm.value[id] = value
+    openFilterSelect.value = ''
+}
+
+const closeFilterSelectOnOutsideClick = (event: MouseEvent) => {
+    const target = event.target as HTMLElement | null
+    if (!target?.closest('.filter-custom-select')) {
+        openFilterSelect.value = ''
+    }
+}
 
 const uniqueOptions = (values: string[]) =>
     Array.from(new Set(values.filter(Boolean))).sort((a, b) => a.localeCompare(b, 'ru'))
@@ -90,6 +161,73 @@ watch(() => [filterForm.value.type, filterForm.value.district], () => {
         filterForm.value.complex = ''
     }
 })
+
+const selectionDigitsOnly = computed(() => selectionPhone.value.replace(/\D/g, ''))
+
+const ensureSelectionPlus = () => {
+    if (!selectionPhone.value) {
+        selectionPhone.value = '+'
+        return
+    }
+    if (!selectionPhone.value.startsWith('+')) {
+        selectionPhone.value = `+${selectionPhone.value.replace(/\D/g, '')}`
+    }
+}
+
+watch(selectionPhone, (value) => {
+    if (!value || value.startsWith('+')) return
+    selectionPhone.value = `+${value.replace(/\D/g, '')}`
+})
+
+const hasSelectionRequestMark = () => {
+    if (!import.meta.client) return false
+    return localStorage.getItem(selectionStorageKey) === '1'
+        || localStorage.getItem(selectionDismissKey) === '1'
+        || document.cookie.split('; ').some((item) => item === `${selectionStorageKey}=1`)
+        || document.cookie.split('; ').some((item) => item === `${selectionDismissKey}=1`)
+}
+
+const markSelectionRequested = () => {
+    if (!import.meta.client) return
+    localStorage.setItem(selectionStorageKey, '1')
+    document.cookie = `${selectionStorageKey}=1; path=/; max-age=${60 * 60 * 24 * 180}; SameSite=Lax`
+    selectionPopupHidden.value = true
+}
+
+const closeSelectionPopup = () => {
+    if (import.meta.client) {
+        localStorage.setItem(selectionDismissKey, '1')
+        document.cookie = `${selectionDismissKey}=1; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`
+    }
+    selectionPopupHidden.value = true
+}
+
+const submitSelectionRequest = async () => {
+    if (selectionDigitsOnly.value.length < 8) {
+        selectionMessage.value = 'Введите корректный номер телефона.'
+        return
+    }
+
+    const formData = new FormData()
+    formData.append('phone', selectionPhone.value)
+    formData.append('page_url', window.location.href)
+    formData.append('comment', 'Персональный подбор из каталога')
+
+    try {
+        const response = await fetch('/contacts.php', {
+            method: 'POST',
+            body: formData,
+        })
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        selectionPhone.value = ''
+        selectionMessage.value = ''
+        selectionSuccess.value = true
+        markSelectionRequested()
+    } catch (error) {
+        console.error('Ошибка отправки:', error)
+        selectionMessage.value = 'Не получилось отправить заявку. Попробуйте ещё раз.'
+    }
+}
 
 const parseNumbers = (value: any) =>
     String(value ?? '')
@@ -387,6 +525,10 @@ const createGoogleMap = (target: HTMLElement, Google: typeof google) => {
 
 onMounted(async () => {
     await nextTick()
+    readInitialFilters()
+    selectionPopupHidden.value = hasSelectionRequestMark()
+    selectionPopupReady.value = true
+    document.addEventListener('click', closeFilterSelectOnOutsideClick)
 
     const apiKey = String(config.public.googleMapsApiKey || '')
     if (!apiKey) {
@@ -412,6 +554,10 @@ onMounted(async () => {
         console.error(error)
     }
 })
+
+onBeforeUnmount(() => {
+    document.removeEventListener('click', closeFilterSelectOnOutsideClick)
+})
 </script>
 
 <template>
@@ -425,52 +571,23 @@ onMounted(async () => {
 
             <form class="catalog-filter" @submit.prevent="applyFilters">
                 <div class="filter-main-row">
-                    <label class="filter-select">
-                        <span>Город</span>
-                        <select v-model="filterForm.city">
-                            <option v-for="option in cityOptions" :key="option.value" :value="option.value">
+                    <div v-for="select in filterSelects" :key="select.id" class="filter-custom-select"
+                        :class="{ open: openFilterSelect === select.id }">
+                        <span>{{ select.label }}</span>
+                        <button type="button" class="filter-select-trigger"
+                            :aria-expanded="openFilterSelect === select.id" @click.stop="toggleFilterSelect(select.id)">
+                            <span>{{ selectedFilterLabel(select) }}</span>
+                        </button>
+
+                        <div v-if="openFilterSelect === select.id" class="filter-select-menu">
+                            <button v-for="option in select.options" :key="`${select.id}-${option.value}`" type="button"
+                                class="filter-select-option"
+                                :class="{ selected: filterForm[select.id] === option.value }"
+                                @click.stop="selectFilterOption(select.id, option.value)">
                                 {{ option.label }}
-                            </option>
-                        </select>
-                    </label>
-
-                    <label class="filter-select">
-                        <span>Тип</span>
-                        <select v-model="filterForm.type">
-                            <option v-for="option in typeOptions" :key="option.value" :value="option.value">
-                                {{ option.label }}
-                            </option>
-                        </select>
-                    </label>
-
-                    <label class="filter-select">
-                        <span>Район</span>
-                        <select v-model="filterForm.district">
-                            <option value="">Любой район</option>
-                            <option v-for="district in districtOptions" :key="district" :value="district">
-                                {{ district }}
-                            </option>
-                        </select>
-                    </label>
-
-                    <label class="filter-select">
-                        <span>Жилкомплекс</span>
-                        <select v-model="filterForm.complex">
-                            <option value="">Любой ЖК</option>
-                            <option v-for="complex in complexOptions" :key="complex" :value="complex">
-                                {{ complex }}
-                            </option>
-                        </select>
-                    </label>
-
-                    <label class="filter-select">
-                        <span>Комнаты</span>
-                        <select v-model="filterForm.rooms">
-                            <option v-for="option in roomOptions" :key="option.value" :value="option.value">
-                                {{ option.label }}
-                            </option>
-                        </select>
-                    </label>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="filter-extra-row">
@@ -525,37 +642,39 @@ onMounted(async () => {
             </div>
 
             <div class="listing-grid">
-                <NuxtLink v-for="item in filteredItems" :key="item.id" :to="propertyUrl(item)" class="listing-card">
-                    <div class="listing-image" :style="{ backgroundImage: `url(${listingImage(item)})` }"
-                        @mousemove="updateListingImage($event, item)" @mouseleave="resetListingImage(item)">
-                        <span v-if="item.new" class="badge">New</span>
-                        <span class="city">{{ cityLabel(item.city) }}</span>
-                        <div v-if="listingImages(item).length > 1" class="image-progress" aria-hidden="true">
-                            <span v-for="(_, imageIndex) in listingImages(item)" :key="imageIndex"
-                                :class="{ active: listingImageIndex(item) === imageIndex }"></span>
-                        </div>
-                    </div>
-
-                    <div class="listing-body">
-                        <div class="listing-topline">
-                            <span>{{ fmt(item.location) }}</span>
-                            <span>{{ fmt(item.specs?.propertyType) }}</span>
+                <template v-for="item in filteredItems" :key="item.id">
+                    <NuxtLink :to="propertyUrl(item)" class="listing-card">
+                        <div class="listing-image" :style="{ backgroundImage: `url(${listingImage(item)})` }"
+                            @mousemove="updateListingImage($event, item)" @mouseleave="resetListingImage(item)">
+                            <span v-if="item.new" class="badge">New</span>
+                            <span class="city">{{ cityLabel(item.city) }}</span>
+                            <div v-if="listingImages(item).length > 1" class="image-progress" aria-hidden="true">
+                                <span v-for="(_, imageIndex) in listingImages(item)" :key="imageIndex"
+                                    :class="{ active: listingImageIndex(item) === imageIndex }"></span>
+                            </div>
                         </div>
 
-                        <h2>{{ item.name }}</h2>
+                        <div class="listing-body">
+                            <div class="listing-topline">
+                                <span>{{ fmt(item.location) }}</span>
+                                <span>{{ fmt(item.specs?.propertyType) }}</span>
+                            </div>
 
-                        <div class="price-row">
-                            <strong>{{ fmt(item.priceDollars) }}</strong>
-                            <span>{{ fmt(item.priceTHB) }}</span>
-                        </div>
+                            <h2>{{ item.name }}</h2>
 
-                        <div class="spec-row">
-                            <span>{{ fmt(item.specs?.bedrooms) }} сп.</span>
-                            <span>{{ fmt(item.specs?.bathrooms) }} ван.</span>
-                            <span>{{ fmt(item.specs?.areaTotal) }}</span>
+                            <div class="price-row">
+                                <strong>{{ fmt(item.priceDollars) }}</strong>
+                                <span>{{ fmt(item.priceTHB) }}</span>
+                            </div>
+
+                            <div class="spec-row">
+                                <span>{{ fmt(item.specs?.bedrooms) }} сп.</span>
+                                <span>{{ fmt(item.specs?.bathrooms) }} ван.</span>
+                                <span>{{ fmt(item.specs?.areaTotal) }}</span>
+                            </div>
                         </div>
-                    </div>
-                </NuxtLink>
+                    </NuxtLink>
+                </template>
 
                 <div v-if="!filteredItems.length" class="empty-state">
                     Под выбранные фильтры ничего не нашлось.
@@ -566,6 +685,34 @@ onMounted(async () => {
         <aside class="desktop-map" aria-label="Карта объектов недвижимости">
             <div ref="desktopMapEl" class="google-map"></div>
             <div v-if="mapError" class="map-error">{{ mapError }}</div>
+        </aside>
+
+        <aside v-if="selectionPopupReady && !selectionPopupHidden" class="selection-card"
+            aria-label="Персональный подбор недвижимости">
+            <button type="button" class="selection-close" aria-label="Закрыть подбор" @click="closeSelectionPopup">
+                ×
+            </button>
+
+            <div class="selection-manager">
+                <img src="/img/people/anna.png" alt="Менеджер Lava Property">
+                <div>
+                    <span>Персональный подбор</span>
+                    <strong>Анна, Lava Property</strong>
+                </div>
+            </div>
+
+            <div class="selection-copy">
+                <h2>Не нашли то, что искали?</h2>
+                <p>Закажите персональный подбор под бюджет, район и цель покупки.</p>
+            </div>
+
+            <form class="selection-form" @submit.prevent="submitSelectionRequest">
+                <input v-model="selectionPhone" v-maska="'+#################'" type="tel" placeholder="+"
+                    inputmode="tel" @focus="ensureSelectionPlus">
+                <button type="submit">Подобрать объект</button>
+                <small v-if="selectionMessage" class="selection-error">{{ selectionMessage }}</small>
+                <small v-if="selectionSuccess" class="selection-success">Заявка отправлена.</small>
+            </form>
         </aside>
     </main>
 </template>
@@ -606,6 +753,8 @@ onMounted(async () => {
 }
 
 .catalog-filter {
+    position: relative;
+    z-index: 40;
     display: grid;
     gap: 16px;
     margin-bottom: 16px;
@@ -620,14 +769,14 @@ onMounted(async () => {
 .filter-main-row {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    overflow: hidden;
+    overflow: visible;
     border: 1px solid #D8D5CD;
     border-radius: 8px;
     background: #FFFFFF;
     box-shadow: 0 0 0 6px rgba(43, 41, 37, 0.06);
 }
 
-.filter-select {
+.filter-custom-select {
     position: relative;
     display: grid;
     gap: 6px;
@@ -638,11 +787,16 @@ onMounted(async () => {
     padding: 16px 18px;
 }
 
-.filter-select:last-child {
-    border-right: 0;
+.filter-custom-select:first-child {
+    border-radius: 8px 0 0 8px;
 }
 
-.filter-select span,
+.filter-custom-select:last-child {
+    border-right: 0;
+    border-radius: 0 8px 8px 0;
+}
+
+.filter-custom-select > span,
 .range-head span {
     color: #6B6864;
     font-family: 'Montserrat-Bold', sans-serif;
@@ -650,7 +804,11 @@ onMounted(async () => {
     text-transform: uppercase;
 }
 
-.filter-select select {
+.filter-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     min-width: 0;
     width: 100%;
     border: 0;
@@ -658,15 +816,108 @@ onMounted(async () => {
     color: #2B2925;
     font-family: 'Montserrat-Bold', sans-serif;
     font-size: 18px;
+    line-height: 1.15;
+    text-align: left;
     outline: none;
-    appearance: none;
+    cursor: pointer;
 }
 
-.filter-select::after {
-    content: '⌄';
+.filter-select-trigger span {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.filter-select-trigger::after {
+    content: '';
+    width: 9px;
+    height: 9px;
+    flex: 0 0 auto;
+    border-right: 2px solid #8A8F94;
+    border-bottom: 2px solid #8A8F94;
+    transform: translateY(-3px) rotate(45deg);
+    transition: transform 0.18s ease, border-color 0.18s ease;
+}
+
+.filter-custom-select.open {
+    z-index: 80;
+}
+
+.filter-custom-select.open .filter-select-trigger::after {
+    border-color: #0F5C43;
+    transform: translateY(2px) rotate(225deg);
+}
+
+.filter-custom-select:hover,
+.filter-custom-select.open {
+    background: #FAF9F6;
+}
+
+.filter-custom-select:hover .filter-select-trigger,
+.filter-custom-select.open .filter-select-trigger {
+    color: #0F5C43;
+}
+
+.filter-select-menu {
     position: absolute;
-    right: 16px;
-    bottom: 18px;
+    top: calc(100% + 8px);
+    right: 10px;
+    left: 10px;
+    z-index: 90;
+    display: grid;
+    max-height: 280px;
+    overflow-y: auto;
+    padding: 8px;
+    border: 1px solid #E3E1DA;
+    border-radius: 8px;
+    background: #FFFFFF;
+    box-shadow: 0 18px 40px rgba(43, 41, 37, 0.16);
+}
+
+.filter-select-option {
+    width: 100%;
+    min-height: 40px;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 7px;
+    background: #FFFFFF;
+    color: #2B2925;
+    font-family: 'Montserrat-Medium', sans-serif;
+    font-size: 14px;
+    line-height: 1.2;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease;
+}
+
+.filter-select-option:hover,
+.filter-select-option.selected {
+    background: #E6F0EC;
+    color: #0F5C43;
+}
+
+.filter-select-option.selected {
+    font-family: 'Montserrat-Bold', sans-serif;
+}
+
+.filter-select-menu::-webkit-scrollbar {
+    width: 8px;
+}
+
+.filter-select-menu::-webkit-scrollbar-thumb {
+    border: 2px solid #FFFFFF;
+    border-radius: 999px;
+    background: #C7D7D0;
+}
+
+.filter-select-menu::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* Legacy native select styles are intentionally avoided for Safari/iOS consistency. */
+.filter-select::after {
     color: #8A8F94;
     pointer-events: none;
 }
@@ -841,12 +1092,161 @@ onMounted(async () => {
     box-shadow: 0 18px 38px rgba(43, 41, 37, 0.1);
 }
 
+.selection-card {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 70;
+    display: grid;
+    width: min(320px, calc(100vw - 28px));
+    gap: 12px;
+    overflow: hidden;
+    border: 1px solid #E3E1DA;
+    border-radius: 8px;
+    background: #FFFFFF;
+    color: #2B2925;
+    opacity: 0.7;
+    padding: 14px;
+    box-shadow: 0 18px 48px rgba(43, 41, 37, 0.16);
+    transition: opacity 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.selection-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    border: 1px solid #E3E1DA;
+    border-radius: 50%;
+    background: #FFFFFF;
+    color: #6B6864;
+    font-size: 20px;
+    line-height: 1;
+    transition: border-color 0.16s ease, color 0.16s ease, background 0.16s ease;
+}
+
+.selection-close:hover {
+    border-color: #0F5C43;
+    background: #E6F0EC;
+    color: #0F5C43;
+}
+
+.selection-card:hover,
+.selection-card:focus-within {
+    opacity: 1;
+    box-shadow: 0 22px 56px rgba(43, 41, 37, 0.2);
+    transform: translateY(-1px);
+}
+
+.selection-manager {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.selection-manager img {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 auto;
+    border: 3px solid #E6F0EC;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.selection-manager span,
+.selection-copy p,
+.selection-form small {
+    color: #6B6864;
+}
+
+.selection-manager span {
+    display: block;
+    font-size: 10px;
+    color: #0F5C43;
+    font-family: 'Montserrat-Bold', sans-serif;
+    text-transform: uppercase;
+}
+
+.selection-manager strong {
+    display: block;
+    margin-top: 2px;
+    font-size: 14px;
+    line-height: 1.2;
+}
+
+.selection-copy {
+    display: grid;
+    gap: 7px;
+}
+
+.selection-copy h2 {
+    font-size: 20px;
+    line-height: 1.1;
+}
+
+.selection-copy p {
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+.selection-form {
+    display: grid;
+    gap: 8px;
+}
+
+.selection-form input {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid #E3E1DA;
+    border-radius: 8px;
+    background: #FAF9F6;
+    color: #2B2925;
+    padding: 0 14px;
+    outline: none;
+}
+
+.selection-form input::placeholder {
+    color: #9A9A9A;
+}
+
+.selection-form input:focus {
+    border-color: #0F5C43;
+    box-shadow: 0 0 0 3px rgba(15, 92, 67, 0.12);
+}
+
+.selection-form button {
+    min-height: 44px;
+    border-radius: 8px;
+    background: #0F5C43;
+    color: #FFFFFF;
+    font-family: 'Montserrat-Bold', sans-serif;
+    transition: transform 0.18s ease, background 0.18s ease;
+}
+
+.selection-form button:hover {
+    transform: translateY(-1px);
+    background: #0B4433;
+}
+
+.selection-error {
+    color: #b42318 !important;
+}
+
+.selection-success {
+    color: #0F5C43 !important;
+}
+
 .listing-image {
     position: relative;
     aspect-ratio: 1.28;
+    background-color: #E6F0EC;
     background-size: cover;
     background-position: center;
     transition: background-image 0.16s ease;
+    overflow: hidden;
 }
 
 .badge,
@@ -1071,11 +1471,11 @@ onMounted(async () => {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .filter-select:nth-child(2n) {
+    .filter-custom-select:nth-child(2n) {
         border-right: 0;
     }
 
-    .filter-select:last-child {
+    .filter-custom-select:last-child {
         grid-column: 1 / -1;
     }
 
@@ -1102,21 +1502,21 @@ onMounted(async () => {
         grid-template-columns: repeat(5, minmax(0, 1fr));
     }
 
-    .filter-select {
+    .filter-custom-select {
         min-height: 68px;
         padding: 12px;
     }
 
-    .filter-select:nth-child(2n) {
+    .filter-custom-select:nth-child(2n) {
         border-right: 1px solid #E3E1DA;
     }
 
-    .filter-select:last-child {
+    .filter-custom-select:last-child {
         grid-column: auto;
         border-right: 0;
     }
 
-    .filter-select select {
+    .filter-select-trigger {
         font-size: 15px;
     }
 
@@ -1143,15 +1543,21 @@ onMounted(async () => {
         box-shadow: 0 0 0 4px rgba(43, 41, 37, 0.06);
     }
 
-    .filter-select,
-    .filter-select:nth-child(2n),
-    .filter-select:last-child {
+    .filter-custom-select,
+    .filter-custom-select:nth-child(2n),
+    .filter-custom-select:last-child {
         border-right: 0;
         border-bottom: 1px solid #E3E1DA;
+        border-radius: 0;
     }
 
-    .filter-select:last-child {
+    .filter-custom-select:first-child {
+        border-radius: 8px 8px 0 0;
+    }
+
+    .filter-custom-select:last-child {
         border-bottom: 0;
+        border-radius: 0 0 8px 8px;
     }
 
     .filter-extra-row {
@@ -1164,6 +1570,21 @@ onMounted(async () => {
 
     .listing-grid {
         grid-template-columns: 1fr;
+    }
+
+    .selection-card {
+        right: 10px;
+        bottom: 10px;
+        width: calc(100vw - 20px);
+        padding: 12px;
+    }
+
+    .selection-copy h2 {
+        font-size: 18px;
+    }
+
+    .selection-copy p {
+        display: none;
     }
 }
 </style>
